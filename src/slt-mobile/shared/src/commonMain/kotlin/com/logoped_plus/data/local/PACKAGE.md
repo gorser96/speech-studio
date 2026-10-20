@@ -34,6 +34,7 @@
 ## Проверки
 
 - [LessonValidationTest.kt](../../../../../../commonTest/kotlin/com/logoped_plus/data/local/LessonValidationTest.kt) — test, правила валидации участников (`invalidReason`): исторические участники валидны, пустой список и дубли ID — InvalidData.
+- [IosDatabasePersistenceTest.kt](../../../../../../iosTest/kotlin/com/logoped_plus/data/local/IosDatabasePersistenceTest.kt) — iOS bundled SQLite: переоткрытие файла сохраняет ребёнка, занятие, участника и URI видео; миграции 1→4 и 3→4 сохраняют данные и создают таблицы v4.
 - [LocalDatabaseIntegrationTest.kt](../../../../../../../../app/src/test/java/com/logoped_plus/data/local/LocalDatabaseIntegrationTest.kt) — Robolectric (sdk 34), 9 тестов: миграции 1→4 и v3→v4 непустой БД (данные детей сохраняются), повторное открытие непустой v4, отсутствие destructive fallback при неизвестной версии (данные не стираются), атомарная замена карточки и отвязка тэга, повторный эмит Flow карточки при смене назначений тэгов, child_tags в наблюдении списка, каскад удаления ребёнка, генерация: повтор без дублей, сохранность прежних занятий, rollback пакетной вставки (trigger RAISE(ABORT)); reorderOnce: перестановка трёх тэгов меняет порядок observeTags, чужое/суженное множество id — NotFound без изменения порядка.
-- Совпадение экспортированной схемы v4 с прежней Android-схемой (identity hash и DDL) — задача 3.1 изменения `cross-platform-kmp`.
-- iOS: klib компилируется; миграции 1→4 на bundled-драйвере, открытие непустой БД и сохранение после перезапуска проверяются только на macOS и остаются открытыми.
+- Совпадение экспортированной схемы v4 с прежней Android-схемой (identity hash и DDL) проверено.
+- iOS: bundled SQLite; переоткрытие непустой БД и миграции 1→4 и 3→4 покрыты `IosDatabasePersistenceTest`. Ручные UI- и видео-сценарии остаются в задаче 5.2 архивированного изменения `cross-platform-kmp`.

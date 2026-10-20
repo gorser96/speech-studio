@@ -11,4 +11,4 @@
 ## Проверки
 
 - Android: `:app:assembleDebug`, `:app:testDebugUnitTest` и `:shared:testAndroidHostTest` — без регрессий после выделения общего контейнера.
-- iOS: `:shared:compileKotlinIosSimulatorArm64` и `:shared:compileKotlinIosArm64` (кросс-компиляция klib на Windows) — успешно; запуск на macOS остаётся в задачах 5.x/6.2 изменения `cross-platform-kmp`.
+- iOS: klib собраны на Windows и macOS, framework и приложение для Apple Silicon-симулятора собираются, первый запуск выполнен; ручные сценарии 5.2 и приёмка 6.2 архивированного изменения `cross-platform-kmp` остаются открытыми в [статусе проверок](../../../../../../../../../openspec/verification/README.md).

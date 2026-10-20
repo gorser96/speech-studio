@@ -51,7 +51,7 @@ Kotlin Multiplatform приложение: общий модуль `shared` (And
 | [app/src/main/AndroidManifest.xml](app/src/main/AndroidManifest.xml) | Activity запуска, тема Android, backup, параметры приложения |
 | [app/src/main/res](app/src/main/res) | Ресурсы Android: имя приложения, XML-тема, иконки, backup-правила |
 | [shared/src/commonMain/composeResources](shared/src/commonMain/composeResources) | Общие ресурсы Compose, включая логотип drawer |
-| [iosApp](iosApp/README.md) | Xcode-проект и SwiftUI-оболочка, статический framework `Shared` |
+| [iosApp](iosApp/README.md) | Xcode-проект, SwiftUI-оболочка, явный `Info.plist`, статический framework `Shared`, скрипт запуска в симуляторе |
 | [app/build.gradle.kts](app/build.gradle.kts), [shared/build.gradle.kts](shared/build.gradle.kts) | Android-приложение и KMP-модуль: таргеты, KSP, зависимости, статический framework |
 | [settings.gradle.kts](settings.gradle.kts), [build.gradle.kts](build.gradle.kts), [gradle/libs.versions.toml](gradle/libs.versions.toml) | Модули, плагины, версии зависимостей |
 | [ARCHITECTURE.md](ARCHITECTURE.md), [описание проекта.md](<../../описание проекта.md>) | Архитектурный план и продуктовый контекст |
