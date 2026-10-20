@@ -13,4 +13,4 @@
 ## Проверки
 
 - [AndroidSettingsRepositoryTest.kt](../../../../../../../../app/src/test/java/com/logoped_plus/data/preferences/AndroidSettingsRepositoryTest.kt) — Robolectric: чтение прежних ключей из файла `settings` и сохранение изменений обратно в тот же файл.
-- iOS-ветка использует те же ключи и компилируется в klib; ручная проверка сохранения на macOS не выполнялась и остаётся открытой (задача 3.2 изменения `cross-platform-kmp`).
+- iOS-ветка использует те же ключи и компилируется в klib; ручная проверка сохранения на macOS не выполнялась — [статус проверок](../../../../../../../../../../openspec/verification/README.md).

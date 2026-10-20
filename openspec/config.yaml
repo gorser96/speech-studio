@@ -1,7 +1,7 @@
 schema: spec-driven
 
 context: |
-  Логопед+ — Android, Kotlin, Jetpack Compose, один модуль app, offline-first; backend и синхронизация вне MVP.
+  Кабинет речи — Android, Kotlin, Jetpack Compose, один модуль app, offline-first; backend и синхронизация вне MVP.
   До проектирования и реализации обязательно прочитай ARCHITECTURE.md и следуй применимым решениям.
   Фактическое состояние проверяй по исходникам и Gradle; целевые технологии не считай реализованными.
   Навигация и проверки: AGENTS.md, PACKAGES.md и PACKAGE.md только затронутых пакетов.

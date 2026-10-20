@@ -15,4 +15,4 @@
 
 ## Проверки
 
-На диске тестов для пакета нет; навигация и оболочка проверялись осмотром кода. Сборка `:app:assembleDebug` и `:app:testDebugUnitTest` — в задачах изменения `cross-platform-kmp`.
+На диске тестов для пакета нет; навигация и оболочка проверялись осмотром кода. Сборка `:app:assembleDebug` и `:app:testDebugUnitTest` выполнялась в изменении `cross-platform-kmp`; результаты — [статус проверок](../../../../../../../../openspec/verification/README.md).

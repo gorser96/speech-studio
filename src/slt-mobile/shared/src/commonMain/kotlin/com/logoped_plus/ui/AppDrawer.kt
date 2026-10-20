@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.disabled
@@ -53,7 +52,7 @@ fun AppDrawer(
             if (logo != null) {
                 Image(
                     painter = logo,
-                    contentDescription = "Логопед+",
+                    contentDescription = "Кабинет речи",
                     modifier = Modifier
                         .size(56.dp)
                         .clip(RoundedCornerShape(14.dp)),
@@ -68,7 +67,7 @@ fun AppDrawer(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Л+",
+                        text = "КР",
                         color = MaterialTheme.colorScheme.onPrimary,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
@@ -79,24 +78,14 @@ fun AppDrawer(
             Spacer(modifier = Modifier.width(8.dp))
 
             Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Логопед",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.5).sp
-                        ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Text(
-                        text = "+",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.ExtraBold
-                        ),
-                        color = Color(0xFF10A98B)
-                    )
-                }
+                Text(
+                    text = "Кабинет речи",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.5).sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
 
                 Text(
                     text = "Помогаем говорить увереннее",

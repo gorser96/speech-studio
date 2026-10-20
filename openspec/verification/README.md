@@ -2,9 +2,33 @@
 
 По одному разделу на изменение: выполненные проверки и незавершённая ручная приёмка.
 
+## rename-app-to-kabinet-rechi
+
+Реализовано: 2026-10-21. Название приложения — «Кабинет речи»; GitHub-репозиторий — `gorser96/speech-studio`.
+
+### Выполненные проверки
+
+- `android:label` приложения и activity по-прежнему ссылается на `@string/app_name`; в `packageDebugResources/values/values.xml` и собранном APK значение `app_name` — «Кабинет речи» (12 кодовых точек, совпадение с ожидаемым).
+- Обе конфигурации iOS (Debug, Release): `INFOPLIST_KEY_CFBundleDisplayName = "Кабинет речи"`; bundle id и `PRODUCT_NAME` не менялись.
+- Осмотр `AppDrawer.kt`: заголовок — «Кабинет речи», `contentDescription` — «Кабинет речи», fallback — «КР»; удалён неиспользуемый импорт `Color`. Перенос длинного названия обеспечивается штатным многострочным `Text` в `Column`.
+- Графика: обе копии `icon1024.png` и launcher-ресурсы всех плотностей пересобраны из прежнего изобразительного мотива без старой надписи; просмотрены `icon1024.png`, foreground, обычная и круглая иконки; адаптивные XML ссылаются на существующие foreground/background, monochrome использует foreground. Все 15 WebP в APK побайтно совпадают с ресурсами проекта.
+- Идентификаторы сохранены: `applicationId`/`namespace` — `com.logoped_plus`, iOS bundle id — `com.logopedplus.iosApp`, package, БД `children.db`, ключи настроек, rootProject и подпись не менялись.
+- Документация: название заменено в `ARCHITECTURE.md`, `PACKAGES.md`, `iosApp/README.md`, `описание проекта.md`, `README.md`, `WSL_ANDROID_DEBUGGING_AGENT.md`, `openspec/config.yaml`, `package-lock.json`. Исторические изменения и отчёты не переписаны. Поиск `Логопед` по `src/` не находит пользовательских упоминаний; в `openspec/specs/` остаётся только слово «Логопед» как название профессии.
+- `:app:assembleDebug` — BUILD SUCCESSFUL (Gradle 1m48s). `openspec validate rename-app-to-kabinet-rechi --strict` — успешно. `git diff --check` — без ошибок (только предупреждения о CRLF).
+- GitHub: имя `gorser96/speech-studio` было свободно, у токена есть admin; репозиторий переименован через API (`200`, `full_name` = `gorser96/speech-studio`). `git remote -v` указывает на новый адрес, `git ls-remote origin HEAD` возвращает `f164067`.
+
+### Незавершённые проверки и приёмка
+
+- Обновление существующей установки Android с данными: установить сборку с новым названием поверх прежней с совместимой подписью и убедиться, что приложение обновилось, а дети, занятия, тэги, шаблоны, видео и настройки доступны. Проверяется неизменностью идентификаторов; эмулятор и установка отключены конфигурацией проекта.
+- Визуальная проверка меню и launcher-иконок на устройствах: полное название при увеличенном системном тексте, отсутствие наложения, обычная/круглая/adaptive/monochrome иконки на светлой и тёмной теме.
+- Доступность: TalkBack на Android и VoiceOver на iOS читают «Кабинет речи» для логотипа.
+- iOS: Xcode-сборка и отображение имени на симуляторе/устройстве — только на macOS; на Windows проверены обе конфигурации статически.
+- Название карточки Google Play и доступность имени в магазине — вне репозитория, меняются при публикации в Play Console.
+- Локальная папка остаётся `D:\projects\slt-plus`; это не влияет на имя репозитория. Инструкции WSL используют путь `/mnt/d/projects/slt-plus` и сохранены.
+
 ## cross-platform-kmp
 
-Реализация в процессе; выполнены задачи 1.1–4.3 [изменения](../changes/cross-platform-kmp/tasks.md). Код iOS-оболочки (5.1–5.2) добавлен, но на macOS не собирался и не проверялся; задача 6.2 открыта.
+Изменение закрыто и заархивировано 2026-10-21. Задачи 1.1–4.3, 6.1 и 6.3 выполнены с проверками. Задачи 5.1, 5.2 и 6.2 закрыты **явным решением пользователя 2026-10-21 без проверки на macOS**: iOS-сборка Xcode, запуск в симуляторе, iOS-тесты и приёмка на устройстве фактически не выполнялись. Ниже это отмечено отдельно; закрытие задач не подтверждает эти сценарии.
 
 ### Выполненные проверки
 
@@ -21,13 +45,13 @@
 - Общая зависимость ViewModel — `org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.6`: артефакт `androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0` не содержит iOS-вариантов и ломал резолв iOS-таргетов.
 - Осмотр кода iOS-видео: `UIDocumentPickerViewController` для `UTType.movie` с множественным выбором и `asCopy = false`; выбранные файлы сохраняются как Base64 security-scoped bookmark, имя берётся из последнего компонента пути; просмотр — `UIDocumentInteractionController` (preview, затем open-in) с освобождением security-scoped доступа после закрытия; ошибки `Missing`/`Permission`/`InvalidLink`/`NoViewer` возвращаются в общий UI; `deviceScan = false`, файл не копируется и не удаляется.
 - Осмотр кода iOS-оболочки: общий `AppContainer` принимает БД, настройки и `VideoLibrary`; iOS-фабрика использует Application Support/`children.db`, `BundledSQLiteDriver`, `NSUserDefaults` и пустой источник автопоиска; `MainViewController` оборачивает общий `App` в `ComposeUIViewController`; `iosApp` — SwiftUI + `UIViewControllerRepresentable`, framework `Shared` статический; выход `onExit = null`, экранное «Назад» включено. Xcode-проект написан вручную и ещё не открывался в Xcode.
-- `openspec validate cross-platform-kmp --strict` — успешно; `git -c core.whitespace=cr-at-eol diff --check` — без ошибок (только предупреждения о CRLF).
+- `openspec validate --all --strict` — 19 спецификаций, 0 ошибок; `git diff --check` — без ошибок (только предупреждения о CRLF). Ссылки в обновлённых `PACKAGE.md` и `iosApp/README.md` проверены скриптом.
 - Запуск на эмуляторе Pixel_7a (Android 14, API 34): APK собирался, но падал при старте с `MissingResourceException` для `drawable/icon1024.png` — AGP-KMP не передавал сгенерированные Compose-ресурсы в assets приложения. В `shared/build.gradle.kts` включено `androidResources.enable = true`; после `:app:installDebug` приложение открывает «Расписание», в logcat нет падений. `:app:connectedDebugAndroidTest` по-прежнему не запускался.
 
 ### Незавершённые проверки и приёмка
 
-- Инструкция продолжения на Mac mini: [подготовка среды, сборка, симулятор, отладка и iPhone](../../src/slt-mobile/iosApp/README.md). Подготовлена 2026-10-20; команды macOS не выполнялись. Отдельного `iosTest` миграций пока нет, общий `iosSimulatorArm64Test` их не подтверждает. Задачи 5.1, 5.2 и 6.2 остаются открытыми.
-- iOS на macOS: собрать `iosApp` в Xcode (статический `Shared`, фаза `embedAndSignAppleFrameworkForXcode`), запустить в симуляторе с пустым `children.db`, проверить миграции 1→4 и сохранение ребёнка/занятия/настроек после перезапуска. Вручную написанный `project.pbxproj` не проверен Xcode (задачи 5.1, 5.2, 6.2).
+- **Не подтверждено, задачи закрыты решением пользователя 2026-10-21.** Инструкция продолжения на Mac mini: [подготовка среды, сборка, симулятор, отладка и iPhone](../../src/slt-mobile/iosApp/README.md). Подготовлена 2026-10-20; команды macOS не выполнялись. Отдельного `iosTest` миграций пока нет, общий `iosSimulatorArm64Test` их не подтверждает. Задачи 5.1, 5.2 и 6.2 отмечены выполненными, хотя перечисленные ниже проверки не выполнены.
+- iOS на macOS: собрать `iosApp` в Xcode (статический `Shared`, фаза `embedAndSignAppleFrameworkForXcode`), запустить в симуляторе с пустым `children.db`, проверить миграции 1→4 и сохранение ребёнка/занятия/настроек после перезапуска. Вручную написанный `project.pbxproj` не проверен Xcode.
 - iOS-видео на macOS/устройстве: системный выбор нескольких видео, сохранение bookmark после перезапуска, открытие в системном просмотрщике, открепление без удаления файла, недоступный/отозванный файл, частичный отказ при выборе. На Windows проверена только компиляция и осмотр кода.
 - iOS-возврат: экранное «Назад» в заголовке для вложенных экранов и корневых разделов, отсутствие подтверждения выхода; системный жест уводит приложение в фон.
 - `:app:connectedDebugAndroidTest` не запускался; установка debug APK и запуск на эмуляторе Pixel_7a (Android 14, API 34) выполнены вручную 2026-10-20, приложение открывается без падений.
