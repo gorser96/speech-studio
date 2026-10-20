@@ -10,9 +10,11 @@ iOS-оболочка общего приложения: точка входа д
 
 Связи: [общий контейнер](../../../../../commonMain/kotlin/com/logoped_plus/app/PACKAGE.md), [Room](../../../../../commonMain/kotlin/com/logoped_plus/data/local/PACKAGE.md), [настройки](../../../../../commonMain/kotlin/com/logoped_plus/data/preferences/PACKAGE.md), [видео](../../../../../commonMain/kotlin/com/logoped_plus/platform/video/PACKAGE.md), [общая оболочка](../../../../../commonMain/kotlin/com/logoped_plus/ui/PACKAGE.md). SwiftUI-обёртка лежит в [iosApp](../../../../../../../iosApp/README.md).
 
-Ограничения: системный жест iOS не перехватывается (`PlatformBackHandler` — no-op), возврат выполняет экранная стрелка; выход из приложения — системный жест, подтверждение не показывается. Автопоиск видео скрыт (`deviceScan = false`). Контейнер не закрывается при уходе в фон и живёт до завершения процесса.
+Ограничения: системный жест iOS не перехватывается (`PlatformBackHandler` — no-op), возврат выполняет экранная стрелка; выход из приложения — системный жест, подтверждение не показывается. Автопоиск видео скрыт (`deviceScan = false`). Контейнер не закрывается при уходе в фон и живёт до завершения процесса. Для `ComposeUIViewController` в `iosApp/iosApp/Info.plist` обязателен `CADisableMinimumFrameDurationOnPhone = true`: без него Compose завершает процесс при старте.
 
 ## Проверки
 
-- `:shared:compileKotlinIosSimulatorArm64`, `:shared:compileKotlinIosArm64` и `:shared:compileTestKotlinIosSimulatorArm64` с `-Pkotlin.native.enableKlibsCrossCompilation=true` — BUILD SUCCESSFUL.
-- Сборка Xcode-проекта, запуск в симуляторе и ручные сценарии на macOS не выполнялись: среда Windows. Остаются открытыми в [статусе проверок](../../../../../../../../../openspec/verification/README.md).
+- `:shared:compileKotlinIosSimulatorArm64`, `:shared:compileKotlinIosArm64` и `:shared:compileTestKotlinIosSimulatorArm64` — BUILD SUCCESSFUL на Windows и повторно на macOS arm64 без флага кросс-компиляции.
+- На macOS с Xcode 27.1: `:shared:linkDebugFrameworkIosSimulatorArm64` и `xcodebuild`-сборка `iosApp` для Apple Silicon-симулятора (`ARCHS=arm64`) — BUILD SUCCESSFUL, Compose-ресурсы попадают в `iosApp.app`.
+- `:shared:iosSimulatorArm64Test` — 41 тест без падений и пропусков, включая `IosDatabasePersistenceTest` (переоткрытие БД, миграции 1→4 и 3→4) и `IosSettingsRepositoryTest` (`NSUserDefaults` после пересоздания репозитория).
+- Первый запуск на iPhone 18 Pro (iOS 27.0): пустое «Расписание» без демо-данных, `children.db` версии 4 в Application Support, падений нет. Ручные UI-сценарии видео и возвратов фактически не проверялись — [статус проверок](../../../../../../../../../openspec/verification/README.md).

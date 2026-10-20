@@ -13,4 +13,5 @@
 ## Проверки
 
 - [AndroidSettingsRepositoryTest.kt](../../../../../../../../app/src/test/java/com/logoped_plus/data/preferences/AndroidSettingsRepositoryTest.kt) — Robolectric: чтение прежних ключей из файла `settings` и сохранение изменений обратно в тот же файл.
-- iOS-ветка использует те же ключи и компилируется в klib; ручная проверка сохранения на macOS не выполнялась — [статус проверок](../../../../../../../../../../openspec/verification/README.md).
+- [IosSettingsRepositoryTest.kt](../../../../../../iosTest/kotlin/com/logoped_plus/data/preferences/IosSettingsRepositoryTest.kt) — iOS: сохранённые значения `NSUserDefaults` читаются новым экземпляром репозитория после `synchronize()`.
+- iOS-ветка использует те же ключи; сохранение проверено `IosSettingsRepositoryTest`. Ручной UI-сценарий задачи 5.2 закрыт без фактической проверки — [статус проверок](../../../../../../../../../../openspec/verification/README.md).
