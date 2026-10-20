@@ -1,0 +1,22 @@
+# com.logoped_plus.ui.screen.schedule.component
+
+Выбор даты, участников и работа с внешними видео. [Общий указатель](../../../../../../../../../../PACKAGES.md).
+
+| Файл | Назначение |
+|---|---|
+| [LessonDateTimeFields.kt](LessonDateTimeFields.kt) | Дата рядом с общим [TimeField](../../../components/PACKAGE.md) (raw «ЧЧ:ММ») и enabled |
+| [LessonDateField.kt](LessonDateField.kt) | DatePickerDialog; календарная дата через UTC, блокировка открытого диалога |
+| [ChildMultiSelectField.kt](ChildMultiSelectField.kt) | Множественный выбор ID с поиском в нижнем листе (`imePadding` у контента); enabled и guards открытого sheet |
+| [VideoAttachmentsEditor.kt](VideoAttachmentsEditor.kt) | Общий редактор вложений через `platform.video`: добавление через `VideoPicker` (Android — OpenMultipleDocuments с постоянным grant), уникальные URI в порядке выбора, подтверждение открепления, кнопка автоподкрепления с запросом доступа к видео (Android — `READ_MEDIA_VIDEO`), enabled/sessionId, scanInProgress/scanMessage; кнопка поиска показывается только при `VideoCapabilities.deviceScan` |
+| [VideoAttachmentLink.kt](VideoAttachmentLink.kt) | Имя через `VideoAccess.displayName` и открытие через `VideoAccess.open` (Android — проверка дескриптора, закрытие перед ACTION_VIEW, ошибки файла/доступа/URI/проигрывателя; iOS — заглушка до этапа 4.3) |
+
+Потребители — [формы занятия](../PACKAGE.md). Черновик принадлежит ViewModel. Открепление меняет связь после сохранения, не удаляет файл и не отзывает grant. Поздние результаты picker при disabled, другой сессии или пересоздании UI игнорируются. Перед запуском проигрывателя enabled проверяется повторно. Реальный постоянный grant и открытие после нового процесса требуют отдельной приёмки.
+
+Автоподкрепление: кнопка «Найти видео занятия» (только когда передан `onAutoAttach`, т.е. в деталях и редактировании) сначала проверяет `READ_MEDIA_VIDEO`; при отсутствии запрашивает через `RequestPermission` с тем же сессионным guard, что у пикера. Выдача — запуск поиска, отказ — локальное сообщение об ошибке, повторное нажатие повторяет запрос. Во время скана кнопка неактивна (`scanInProgress`), итоги — `scanMessage`. Ссылки MediaStore открываются через `VideoAttachmentLink`, пока действует разрешение на медиа; при отзыве разрешения — стандартная ошибка недоступного файла, открепление остаётся.
+
+## Проверки
+
+- Android-выбор/просмотр видео и постоянный grant требуют ручной приёмки на устройстве.
+- iOS-адаптер пока заглушка: выбор и просмотр не реализованы, автопоиск скрыт (`deviceScan = false`).
+
+Результаты и открытые критерии — [приёмка](../../../../../../../../../../../../openspec/verification/README.md).

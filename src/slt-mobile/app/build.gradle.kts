@@ -39,10 +39,12 @@ android {
     buildFeatures {
         compose = true
     }
-    sourceSets.getByName("androidTest").assets.srcDir("schemas")
+    // Room-схемы экспортирует :shared; Android-тесты миграций читают их оттуда.
+    sourceSets.getByName("androidTest").assets.srcDir("../shared/schemas")
 }
 
 dependencies {
+    implementation(project(":shared"))
     // Room testing uses serialization 1.8.1; align debug runtime for APK/test consistency.
     // Release dependencies are unchanged.
     debugImplementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.8.1"))

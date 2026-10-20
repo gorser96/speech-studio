@@ -6,15 +6,19 @@ import android.os.IBinder
 import android.os.Process
 import androidx.room.withTransaction
 import com.logoped_plus.data.local.ChildrenDatabase
+import com.logoped_plus.data.local.createChildrenDatabase
 import com.logoped_plus.domain.model.Lesson
 import com.logoped_plus.domain.model.LessonParticipant
 import com.logoped_plus.domain.model.VideoAttachment
 import com.logoped_plus.domain.repository.LessonWriteResult
 import kotlinx.coroutines.*
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.atTime
+import kotlinx.datetime.plus
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.time.LocalDateTime
 
 /** Debug-only shell probe; never opens the application database or the children probe. */
 class LessonTransactionProbeService : Service() {
@@ -37,18 +41,18 @@ class LessonTransactionProbeService : Service() {
             val name = "lesson-probe-$run.db"
             val path = getDatabasePath(name).canonicalFile
             check(path.parentFile == getDatabasePath("lesson-probe.db").canonicalFile.parentFile)
-            val db = ChildrenDatabase.create(this@LessonTransactionProbeService, name)
+            val db = createChildrenDatabase(this@LessonTransactionProbeService, name)
             try {
                 if (action == "inspect") {
                     report(run, JSONObject().put("status", "INSPECTED").put("snapshot", snapshot(db)))
                 } else {
                     db.childDao().addOnce("a", "Саша"); db.childDao().addOnce("b", "Саша")
-                    val old = Lesson("subject", listOf(LessonParticipant("a")), LocalDateTime.of(2026, 9, 11, 23, 30, 1, 123456789), 90, "  старое\n ", listOf(VideoAttachment("content://old")))
+                    val old = Lesson("subject", listOf(LessonParticipant("a")), LocalDateTime(2026, 9, 11, 23, 30, 1, 123456789), 90, "  старое\n ", listOf(VideoAttachment("content://old")))
                     val control = old.copy(id = "control", participants = listOf(LessonParticipant("b")), comment = "Контроль")
                     check(db.lessonDao().addOnce(control) is LessonWriteResult.Success)
                     if (update) check(db.lessonDao().addOnce(old) is LessonWriteResult.Success)
                     val before = snapshot(db)
-                    val changed = old.copy(scheduledAt = old.scheduledAt.plusDays(2), durationMinutes = 55,
+                    val changed = old.copy(scheduledAt = old.scheduledAt.date.plus(2, DateTimeUnit.DAY).atTime(old.scheduledAt.time), durationMinutes = 55,
                         participants = listOf(LessonParticipant("b"), LessonParticipant("a")), comment = "  новое\n  ",
                         videoAttachments = listOf(VideoAttachment("content://new/z"), VideoAttachment("content://new/a")))
                     if (action == "rollback") {

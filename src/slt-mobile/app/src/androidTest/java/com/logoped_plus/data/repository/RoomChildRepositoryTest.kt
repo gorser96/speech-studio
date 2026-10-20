@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.logoped_plus.data.local.ChildrenDatabase
+import com.logoped_plus.data.local.createChildrenDatabase
 import com.logoped_plus.data.local.toDomain
 import com.logoped_plus.domain.model.Child
 import com.logoped_plus.domain.model.Lesson
@@ -40,7 +41,7 @@ class RoomChildRepositoryTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val name = "test-child-delete.db"
         context.deleteDatabase(name)
-        db = ChildrenDatabase.create(context, name)
+        db = createChildrenDatabase(context, name)
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         children = RoomChildRepository(db.childDao(), scope)
         repo = RoomLessonRepository(db.lessonDao(), children, scope)

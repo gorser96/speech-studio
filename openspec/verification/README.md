@@ -2,6 +2,38 @@
 
 По одному разделу на изменение: выполненные проверки и незавершённая ручная приёмка.
 
+## cross-platform-kmp
+
+Реализация в процессе; выполнены задачи 1.1–4.3 [изменения](../changes/cross-platform-kmp/tasks.md). Код iOS-оболочки (5.1–5.2) добавлен, но на macOS не собирался и не проверялся; задача 6.2 открыта.
+
+### Выполненные проверки
+
+- Базовая линия Android до перехода: `:app:assembleDebug` и `:app:testDebugUnitTest` — BUILD SUCCESSFUL, 36 тестов без сбоев.
+- `:shared:compileAndroidMain` и `:app:assembleDebug` — BUILD SUCCESSFUL; domain, Room, настройки, тема, общие экраны и ViewModel компилируются в `commonMain`. `:shared:compileKotlinMetadata` вызывался, но задача SKIPPED: Kotlin/Native-таргеты отключены на Windows, общий код проверяется Android-компиляцией.
+- `:shared:testAndroidHostTest` — 37 тестов без сбоев: `RussianTextTest` (5), `RussianNameSortTest` (5), `RecurringLessonPlannerTest` (11), `FindLessonVideosUseCaseTest` (4), `WeekTimelineTest` (8), `LessonValidationTest` (3), `ChildrenViewModelCardTagsTest` (1).
+- `:app:testDebugUnitTest` — 13 тестов без сбоев: `LocalDatabaseIntegrationTest` (9, Robolectric sdk 34) и `MediaStoreTimeToMillisTest` (3), `AndroidSettingsRepositoryTest` (1).
+- Добавлены проверки миграции 1→4, повторного открытия непустой v4 и отсутствия destructive fallback; чтение прежних ключей `settings` и сохранение изменений.
+- Экспортированная схема [shared/schemas/.../4.json](../../src/slt-mobile/shared/schemas/com.logoped_plus.data.local.ChildrenDatabase/4.json) побайтно совпадает с прежней [app/schemas/.../4.json](../../src/slt-mobile/app/schemas/com.logoped_plus.data.local.ChildrenDatabase/4.json), identity hash `7441455d846ab97cdbe9ae33d072969c`.
+- Осмотр кода: тема вынесена в `commonMain` с Android actual для dynamic color и iOS actual с общими схемами; логотип drawer — общий `composeResources/drawable/icon1024.png`; системный Back — `PlatformBackHandler` (Android actual, iOS no-op); `showSectionBack` включает экранную стрелку, `onExit = null` на iOS исключает подтверждение выхода; busy-блокировки и черновики остаются в общих ViewModel.
+- Карты пакетов обновлены: [PACKAGES.md](../../src/slt-mobile/PACKAGES.md) и `PACKAGE.md` перенесённых пакетов; относительные ссылки проверены скриптом.
+- iOS-klib собраны на Windows с `-Pkotlin.native.enableKlibsCrossCompilation=true`: `:shared:compileKotlinIosSimulatorArm64`, `:shared:compileKotlinIosArm64`, `:shared:compileTestKotlinIosSimulatorArm64` — BUILD SUCCESSFUL. Проверена компиляция общего кода и iOS-адаптеров (Room bundled, `NSUserDefaults`, видео, возврат); это не заменяет Xcode-сборку и запуск на macOS.
+- После выделения общего `AppContainer` и iOS-оболочки: `:app:assembleDebug`, `:app:testDebugUnitTest` (13 тестов) и `:shared:testAndroidHostTest` (37 тестов) — BUILD SUCCESSFUL, регрессий Android не выявлено.
+- Общая зависимость ViewModel — `org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.6`: артефакт `androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0` не содержит iOS-вариантов и ломал резолв iOS-таргетов.
+- Осмотр кода iOS-видео: `UIDocumentPickerViewController` для `UTType.movie` с множественным выбором и `asCopy = false`; выбранные файлы сохраняются как Base64 security-scoped bookmark, имя берётся из последнего компонента пути; просмотр — `UIDocumentInteractionController` (preview, затем open-in) с освобождением security-scoped доступа после закрытия; ошибки `Missing`/`Permission`/`InvalidLink`/`NoViewer` возвращаются в общий UI; `deviceScan = false`, файл не копируется и не удаляется.
+- Осмотр кода iOS-оболочки: общий `AppContainer` принимает БД, настройки и `VideoLibrary`; iOS-фабрика использует Application Support/`children.db`, `BundledSQLiteDriver`, `NSUserDefaults` и пустой источник автопоиска; `MainViewController` оборачивает общий `App` в `ComposeUIViewController`; `iosApp` — SwiftUI + `UIViewControllerRepresentable`, framework `Shared` статический; выход `onExit = null`, экранное «Назад» включено. Xcode-проект написан вручную и ещё не открывался в Xcode.
+- `openspec validate cross-platform-kmp --strict` — успешно; `git -c core.whitespace=cr-at-eol diff --check` — без ошибок (только предупреждения о CRLF).
+- Запуск на эмуляторе Pixel_7a (Android 14, API 34): APK собирался, но падал при старте с `MissingResourceException` для `drawable/icon1024.png` — AGP-KMP не передавал сгенерированные Compose-ресурсы в assets приложения. В `shared/build.gradle.kts` включено `androidResources.enable = true`; после `:app:installDebug` приложение открывает «Расписание», в logcat нет падений. `:app:connectedDebugAndroidTest` по-прежнему не запускался.
+
+### Незавершённые проверки и приёмка
+
+- Инструкция продолжения на Mac mini: [подготовка среды, сборка, симулятор, отладка и iPhone](../../src/slt-mobile/iosApp/README.md). Подготовлена 2026-10-20; команды macOS не выполнялись. Отдельного `iosTest` миграций пока нет, общий `iosSimulatorArm64Test` их не подтверждает. Задачи 5.1, 5.2 и 6.2 остаются открытыми.
+- iOS на macOS: собрать `iosApp` в Xcode (статический `Shared`, фаза `embedAndSignAppleFrameworkForXcode`), запустить в симуляторе с пустым `children.db`, проверить миграции 1→4 и сохранение ребёнка/занятия/настроек после перезапуска. Вручную написанный `project.pbxproj` не проверен Xcode (задачи 5.1, 5.2, 6.2).
+- iOS-видео на macOS/устройстве: системный выбор нескольких видео, сохранение bookmark после перезапуска, открытие в системном просмотрщике, открепление без удаления файла, недоступный/отозванный файл, частичный отказ при выборе. На Windows проверена только компиляция и осмотр кода.
+- iOS-возврат: экранное «Назад» в заголовке для вложенных экранов и корневых разделов, отсутствие подтверждения выхода; системный жест уводит приложение в фон.
+- `:app:connectedDebugAndroidTest` не запускался; установка debug APK и запуск на эмуляторе Pixel_7a (Android 14, API 34) выполнены вручную 2026-10-20, приложение открывается без падений.
+- Ручная приёмка Android после перехода: открытие существующей `children.db` v4, сохранение настроек и логотип drawer, навигация/Back, черновики и блокировки записи, Android-видео (SAF, сохранение grant после перезапуска, `ACTION_VIEW`).
+
+
 ## auto-attach-lesson-videos
 
 Реализовано: 2026-09-30.

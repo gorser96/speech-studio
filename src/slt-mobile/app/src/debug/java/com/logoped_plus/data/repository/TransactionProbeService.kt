@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.IBinder
 import android.os.Process
 import androidx.room.withTransaction
-import com.logoped_plus.data.local.ChildrenDatabase
+import com.logoped_plus.data.local.createChildrenDatabase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import org.json.JSONArray
@@ -29,7 +29,7 @@ class TransactionProbeService : Service() {
         val rename = intent.getBooleanExtra("rename", false)
         val action = intent.getStringExtra("action") ?: "write"
         operation = scope.launch {
-            val db = ChildrenDatabase.create(this@TransactionProbeService, "probe-$run.db")
+            val db = createChildrenDatabase(this@TransactionProbeService, "probe-$run.db")
             try {
                 val dao = db.childDao()
                 if (action == "inspect") {

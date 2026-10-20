@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.logoped_plus.data.media
 
 import android.content.ContentUris
@@ -7,13 +9,13 @@ import com.logoped_plus.domain.model.DeviceVideo
 import com.logoped_plus.domain.repository.VideoLibrary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.time.Instant
+import kotlin.time.Instant
 
 class MediaStoreVideoScanner(private val context: Context) : VideoLibrary {
 
     override suspend fun findVideos(from: Instant, to: Instant): List<DeviceVideo> = withContext(Dispatchers.IO) {
-        val fromMillis = from.toEpochMilli()
-        val toMillis = to.toEpochMilli()
+        val fromMillis = from.toEpochMilliseconds()
+        val toMillis = to.toEpochMilliseconds()
         val found = mutableListOf<DeviceVideo>()
         context.contentResolver.query(
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI,

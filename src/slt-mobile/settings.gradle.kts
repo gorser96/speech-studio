@@ -24,4 +24,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "LogopedPlus"
 include(":app")
+include(":shared")
  

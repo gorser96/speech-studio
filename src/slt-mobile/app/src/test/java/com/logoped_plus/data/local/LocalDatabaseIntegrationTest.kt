@@ -2,7 +2,6 @@ package com.logoped_plus.data.local
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import androidx.room.Room
 import com.logoped_plus.domain.model.Child
 import com.logoped_plus.domain.model.ChildSchedule
 import com.logoped_plus.domain.model.GenerationCounts
@@ -20,9 +19,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -30,9 +34,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -53,14 +54,13 @@ class LocalDatabaseIntegrationTest {
 
     private fun open(name: String): ChildrenDatabase {
         context.deleteDatabase(name)
-        val db = ChildrenDatabase.create(context, name)
+        val db = createChildrenDatabase(context, name)
         databases.add(db)
         return db
     }
 
     private fun openExisting(name: String): ChildrenDatabase {
-        val db = Room.databaseBuilder(context.applicationContext, ChildrenDatabase::class.java, name)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+        val db = createChildrenDatabase(context, name)
         databases.add(db)
         return db
     }
@@ -72,6 +72,77 @@ class LocalDatabaseIntegrationTest {
     private suspend fun lessons(db: ChildrenDatabase) = db.lessonDao().observeLessons().first()
 
     @Test
+    fun migration1To4PreservesChildren() = runBlocking {
+        val name = "itest-migration-1-4.db"
+        context.deleteDatabase(name)
+        val raw = SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null)
+        try {
+            V1_DDL.forEach { raw.execSQL(it) }
+            raw.execSQL("PRAGMA user_version = 1")
+            raw.execSQL("INSERT INTO children (id, name) VALUES ('c1', 'Анна')")
+            raw.execSQL("INSERT INTO children (id, name) VALUES ('c2', 'Борис')")
+        } finally {
+            raw.close()
+        }
+
+        val db = openExisting(name)
+        assertEquals(4, db.openHelper.readableDatabase.version)
+        assertEquals(listOf("c1", "c2"), children(db).map { it.id })
+        assertEquals(listOf("Анна", "Борис"), children(db).map { it.name })
+        assertTrue(lessons(db).isEmpty())
+        assertTrue(tags(db).isEmpty())
+    }
+
+    @Test
+    fun missingMigrationFailsWithoutWipingData() {
+        val name = "itest-no-destructive-fallback.db"
+        context.deleteDatabase(name)
+        val raw = SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null)
+        try {
+            V1_DDL.forEach { raw.execSQL(it) }
+            raw.execSQL("PRAGMA user_version = 5")
+            raw.execSQL("INSERT INTO children (id, name) VALUES ('c1', 'Анна')")
+        } finally {
+            raw.close()
+        }
+
+        val db = openExisting(name)
+        assertThrows(IllegalStateException::class.java) {
+            db.openHelper.writableDatabase
+        }
+        db.close()
+
+        val check = SQLiteDatabase.openDatabase(
+            context.getDatabasePath(name).path,
+            null,
+            SQLiteDatabase.OPEN_READONLY
+        )
+        try {
+            check.rawQuery("SELECT id, name FROM children", null).use { rows ->
+                assertTrue(rows.moveToFirst())
+                assertEquals("c1", rows.getString(0))
+                assertEquals("Анна", rows.getString(1))
+                assertFalse(rows.moveToNext())
+            }
+        } finally {
+            check.close()
+        }
+    }
+
+    @Test
+    fun reopeningV4DatabaseKeepsData() = runBlocking {
+        val name = "itest-reopen.db"
+        val first = open(name)
+        assertTrue(first.childDao().addOnce("c1", "Анна"))
+        first.close()
+        databases.remove(first)
+
+        val second = openExisting(name)
+        assertEquals(4, second.openHelper.readableDatabase.version)
+        assertEquals(listOf("c1"), children(second).map { it.id })
+    }
+
+    @Test
     fun migration3To4PreservesData() = runBlocking {
         val name = "itest-migration.db"
         context.deleteDatabase(name)
@@ -81,8 +152,8 @@ class LocalDatabaseIntegrationTest {
             raw.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY, identity_hash TEXT)")
             raw.execSQL("INSERT INTO room_master_table (id, identity_hash) VALUES (42, '2aff2df951e96f2f56c716e461ed7497')")
             raw.execSQL("PRAGMA user_version = 3")
-            val epochDay = LocalDate.of(2026, 9, 1).toEpochDay()
-            val nano = LocalTime.of(9, 0).toNanoOfDay()
+            val epochDay = LocalDate(2026, 9, 1).toEpochDays()
+            val nano = LocalTime(9, 0).toNanosecondOfDay()
             raw.execSQL("INSERT INTO children (id, name) VALUES ('c1', 'Анна')")
             raw.execSQL("INSERT INTO children (id, name) VALUES ('c2', 'Борис')")
             raw.execSQL("INSERT INTO lessons (id, scheduledEpochDay, scheduledNanoOfDay, durationMinutes, comment) VALUES ('l1', $epochDay, $nano, 40, 'комментарий')")
@@ -121,24 +192,24 @@ class LocalDatabaseIntegrationTest {
         assertTrue(dao.addOnce("c2", "Борис"))
         assertEquals(TagWriteResult.Success, tagDao.saveOnce(Tag("t1", "Группа А", TagColorKey.RED)))
         assertEquals(TagWriteResult.Success, tagDao.saveOnce(Tag("t2", "Бис", TagColorKey.BLUE)))
-        val end = LocalDate.of(2026, 10, 31)
+        val end = LocalDate(2026, 10, 31)
         val first = ChildSchedule(
             slots = listOf(
-                WeeklyLessonSlot("s1", 4, LocalTime.of(16, 0), 40),
-                WeeklyLessonSlot("s2", 5, LocalTime.of(15, 0), 30)
+                WeeklyLessonSlot("s1", 4, LocalTime(16, 0), 40),
+                WeeklyLessonSlot("s2", 5, LocalTime(15, 0), 30)
             ), endDate = end
         )
         assertEquals(ChildWriteResult.Success, dao.saveCardOnce(Child("c1", "Анна", listOf("t1", "t2"), first)))
         var saved = card(db, "c1")!!
         assertEquals(listOf("t1", "t2"), saved.tagIds.sorted())
-        assertEquals(end.toEpochDay(), saved.schedule.endDate!!.toEpochDay())
+        assertEquals(end.toEpochDays(), saved.schedule.endDate!!.toEpochDays())
         assertEquals(listOf("s1", "s2"), saved.schedule.slots.map { it.id })
 
         val second = ChildSchedule(
             slots = listOf(
-                WeeklyLessonSlot("s1", 4, LocalTime.of(17, 0), 40),
-                WeeklyLessonSlot("s2", 5, LocalTime.of(15, 0), 30),
-                WeeklyLessonSlot("s3", 4, LocalTime.of(10, 0), 20)
+                WeeklyLessonSlot("s1", 4, LocalTime(17, 0), 40),
+                WeeklyLessonSlot("s2", 5, LocalTime(15, 0), 30),
+                WeeklyLessonSlot("s3", 4, LocalTime(10, 0), 20)
             ), endDate = end
         )
         assertEquals(ChildWriteResult.Success, dao.saveCardOnce(Child("c1", "Алина", listOf("t2"), second)))
@@ -146,7 +217,7 @@ class LocalDatabaseIntegrationTest {
         assertEquals("Алина", saved.name)
         assertEquals(listOf("t2"), saved.tagIds)
         assertEquals(
-            listOf("s1" to LocalTime.of(17, 0), "s2" to LocalTime.of(15, 0), "s3" to LocalTime.of(10, 0)),
+            listOf("s1" to LocalTime(17, 0), "s2" to LocalTime(15, 0), "s3" to LocalTime(10, 0)),
             saved.schedule.slots.map { it.id to it.startTime }
         )
 
@@ -161,7 +232,7 @@ class LocalDatabaseIntegrationTest {
 
         check(db.lessonDao().addOnce(
             Lesson("l1", listOf(LessonParticipant("c1")),
-                LocalDateTime.of(2026, 9, 1, 9, 0), 40, "", emptyList())
+                LocalDateTime(2026, 9, 1, 9, 0), 40, "", emptyList())
         ) is LessonWriteResult.Success)
         assertTrue(dao.deleteOnce("c1"))
         assertNull(card(db, "c1"))
@@ -247,25 +318,25 @@ class LocalDatabaseIntegrationTest {
         dao.addOnce("c2", "Борис")
         check(db.lessonDao().addOnce(
             Lesson("old", listOf(LessonParticipant("c1")),
-                LocalDateTime.of(2026, 9, 1, 9, 0), 40, "старое", emptyList())
+                LocalDateTime(2026, 9, 1, 9, 0), 40, "старое", emptyList())
         ) is LessonWriteResult.Success)
         check(db.lessonDao().addOnce(
             Lesson("busy", listOf(LessonParticipant("c2")),
-                LocalDateTime.of(2026, 10, 8, 16, 20), 30, "", emptyList())
+                LocalDateTime(2026, 10, 8, 16, 20), 30, "", emptyList())
         ) is LessonWriteResult.Success)
         val schedule = ChildSchedule(
-            slots = listOf(WeeklyLessonSlot("s1", 4, LocalTime.of(16, 0), 40)),
-            endDate = LocalDate.of(2026, 10, 15)
+            slots = listOf(WeeklyLessonSlot("s1", 4, LocalTime(16, 0), 40)),
+            endDate = LocalDate(2026, 10, 15)
         )
         assertEquals(ChildWriteResult.Success, dao.saveCardOnce(Child("c1", "Анна", emptyList(), schedule)))
-        val now = LocalDateTime.of(2026, 10, 5, 9, 0)
+        val now = LocalDateTime(2026, 10, 5, 9, 0)
 
         val first = db.lessonDao().generateForChild("c1", now)
         assertEquals(GenerateChildLessonsResult.Success(GenerationCounts(2, 0)), first)
         assertEquals(4, lessons(db).size)
         val generated = lessons(db).filter { it.lesson.id != "old" && it.lesson.id != "busy" }
-        assertEquals(listOf(LocalDate.of(2026, 10, 8), LocalDate.of(2026, 10, 15)), generated.map { LocalDate.ofEpochDay(it.lesson.scheduledEpochDay) })
-        assertEquals(listOf(LocalTime.of(16, 0), LocalTime.of(16, 0)).map { it.toNanoOfDay() }, generated.map { it.lesson.scheduledNanoOfDay })
+        assertEquals(listOf(LocalDate(2026, 10, 8), LocalDate(2026, 10, 15)), generated.map { LocalDate.fromEpochDays(it.lesson.scheduledEpochDay) })
+        assertEquals(listOf(LocalTime(16, 0), LocalTime(16, 0)).map { it.toNanosecondOfDay() }, generated.map { it.lesson.scheduledNanoOfDay })
         assertEquals(listOf(listOf("c1"), listOf("c1")), generated.map { it.participants.map { p -> p.childId } })
 
         val second = db.lessonDao().generateForChild("c1", now)
@@ -275,9 +346,9 @@ class LocalDatabaseIntegrationTest {
 
         val scheduleTwo = ChildSchedule(
             slots = listOf(
-                WeeklyLessonSlot("a", 4, LocalTime.of(10, 0), 40),
-                WeeklyLessonSlot("b", 5, LocalTime.of(10, 0), 40)
-            ), endDate = LocalDate.of(2026, 10, 16)
+                WeeklyLessonSlot("a", 4, LocalTime(10, 0), 40),
+                WeeklyLessonSlot("b", 5, LocalTime(10, 0), 40)
+            ), endDate = LocalDate(2026, 10, 16)
         )
         assertEquals(ChildWriteResult.Success, dao.saveCardOnce(Child("c1", "Анна", emptyList(), scheduleTwo)))
         db.openHelper.writableDatabase.execSQL("CREATE TABLE probe_count (n INTEGER)")
@@ -294,8 +365,8 @@ class LocalDatabaseIntegrationTest {
         }
         assertTrue(failed)
         assertEquals(4, lessons(db).size)
-        val morningNanos = LocalTime.of(10, 0).toNanoOfDay()
-        val rollbackDays = listOf(LocalDate.of(2026, 10, 8), LocalDate.of(2026, 10, 9)).map { it.toEpochDay() }.toSet()
+        val morningNanos = LocalTime(10, 0).toNanosecondOfDay()
+        val rollbackDays = listOf(LocalDate(2026, 10, 8), LocalDate(2026, 10, 9)).map { it.toEpochDays() }.toSet()
         assertTrue(lessons(db).none { it.lesson.scheduledNanoOfDay == morningNanos && it.lesson.scheduledEpochDay in rollbackDays })
         db.openHelper.writableDatabase.execSQL("DROP TRIGGER fail_gen")
         db.openHelper.writableDatabase.execSQL("DROP TABLE probe_count")
@@ -306,6 +377,11 @@ class LocalDatabaseIntegrationTest {
     }
 
     private companion object {
+        val V1_DDL = listOf(
+            "CREATE TABLE IF NOT EXISTS `children` (`position` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id` TEXT NOT NULL, `name` TEXT NOT NULL)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_children_id` ON `children` (`id`)"
+        )
+
         val V3_DDL = listOf(
             "CREATE TABLE IF NOT EXISTS `children` (`position` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id` TEXT NOT NULL, `name` TEXT NOT NULL)",
             "CREATE UNIQUE INDEX IF NOT EXISTS `index_children_id` ON `children` (`id`)",
