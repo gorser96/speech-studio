@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -103,7 +104,7 @@ fun App(
     }
 
     ModalNavigationDrawer(
-        gesturesEnabled = !appBusy,
+        gesturesEnabled = false,
         drawerState = drawerState,
         drawerContent = {
             AppDrawer(
@@ -179,6 +180,20 @@ fun App(
                     },
                     title = {
                         Text(screenTitle)
+                    },
+                    actions = {
+                        if (currentScreen == AppScreen.Schedule && !lessonOpen) {
+                            IconButton(
+                                enabled = !appBusy,
+                                onClick = {
+                                    if (!appBusy && scheduleViewModel.uiState.value.editor == null) {
+                                        scheduleViewModel.onAction(ScheduleAction.StartCreatingLesson())
+                                    }
+                                }
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Добавление занятия")
+                            }
+                        }
                     }
                 )
             }

@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.SegmentedButton
@@ -18,9 +20,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.logoped_plus.platform.PlatformBackHandler
 import com.logoped_plus.ui.screen.schedule.LessonCreateView
@@ -99,10 +104,41 @@ private fun ScheduleBody(
         return
     }
     if (uiState.lessonLoadState !is LessonLoadState.Ready && uiState.lessons.isEmpty()) {
-        Button(onClick = { onAction(ScheduleAction.StartCreatingLesson()) }) { Text("Добавить занятие") }
         return
     }
-    BoxWithConstraints(Modifier.fillMaxSize()) {
+    val swipeThreshold = with(LocalDensity.current) { 56.dp.toPx() }
+    val currentMode by rememberUpdatedState(uiState.viewMode)
+    val currentOnAction by rememberUpdatedState(onAction)
+    BoxWithConstraints(
+        Modifier.fillMaxSize().pointerInput(swipeThreshold) {
+            var dragDistance = 0f
+            detectHorizontalDragGestures(
+                onDragStart = { dragDistance = 0f },
+                onDragCancel = { dragDistance = 0f },
+                onDragEnd = {
+                    val nextMode = when {
+                        dragDistance <= -swipeThreshold -> when (currentMode) {
+                            ScheduleViewMode.MONTH -> ScheduleViewMode.WEEK
+                            ScheduleViewMode.WEEK -> ScheduleViewMode.DAY
+                            ScheduleViewMode.DAY -> null
+                        }
+                        dragDistance >= swipeThreshold -> when (currentMode) {
+                            ScheduleViewMode.DAY -> ScheduleViewMode.WEEK
+                            ScheduleViewMode.WEEK -> ScheduleViewMode.MONTH
+                            ScheduleViewMode.MONTH -> null
+                        }
+                        else -> null
+                    }
+                    dragDistance = 0f
+                    nextMode?.let { currentOnAction(ScheduleAction.ChangeViewMode(it)) }
+                },
+                onHorizontalDrag = { change, dragAmount ->
+                    change.consume()
+                    dragDistance += dragAmount
+                }
+            )
+        }
+    ) {
         val weekHeight = maxHeight.coerceAtLeast(420.dp)
         Column(
             modifier = Modifier
@@ -199,16 +235,6 @@ private fun ScheduleBody(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    onAction(ScheduleAction.StartCreatingLesson())
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Добавить занятие")
-            }
         }
     }
 }
@@ -224,7 +250,7 @@ private fun ScheduleViewModeSelector(
             selected = selectedMode == ScheduleViewMode.MONTH, onClick = {
                 onModeSelected(ScheduleViewMode.MONTH)
             }, shape = SegmentedButtonDefaults.itemShape(
-                index = 0, count = 3
+                index = 0, count = 3, baseShape = RoundedCornerShape(8.dp)
             )
         ) {
             Text("Месяц")
@@ -234,7 +260,7 @@ private fun ScheduleViewModeSelector(
             selected = selectedMode == ScheduleViewMode.WEEK, onClick = {
                 onModeSelected(ScheduleViewMode.WEEK)
             }, shape = SegmentedButtonDefaults.itemShape(
-                index = 1, count = 3
+                index = 1, count = 3, baseShape = RoundedCornerShape(8.dp)
             )
         ) {
             Text("Неделя")
@@ -244,7 +270,7 @@ private fun ScheduleViewModeSelector(
             selected = selectedMode == ScheduleViewMode.DAY, onClick = {
                 onModeSelected(ScheduleViewMode.DAY)
             }, shape = SegmentedButtonDefaults.itemShape(
-                index = 2, count = 3
+                index = 2, count = 3, baseShape = RoundedCornerShape(8.dp)
             )
         ) {
             Text("День")
