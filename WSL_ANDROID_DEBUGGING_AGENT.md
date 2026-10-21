@@ -2,10 +2,10 @@
 
 ## Цель и схема окружения
 
-Работай с Android-проектом «Кабинет речи» в существующем окружении. **Не предлагай переносить проект с диска Windows в файловую систему Linux**: текущая рабочая копия намеренно находится на `/mnt/d`.
+Работай с Android-проектом «SpeechStudio» в существующем окружении. **Не предлагай переносить проект с диска Windows в файловую систему Linux**: текущая рабочая копия намеренно находится на `/mnt/d`.
 
 - **ОС для разработки:** Ubuntu в WSL.
-- **Корень Android-проекта:** `/mnt/d/projects/slt-plus/src/slt-mobile`
+- **Корень Android-проекта:** `/mnt/d/projects/speech-studio/src/speechstudio-mobile`
 - **OpenCode:** Linux-версия внутри WSL.
 - **Java:** OpenJDK 17.
 - **Gradle:** используй Gradle Wrapper проекта (`./gradlew`); сейчас ожидается Gradle 9.6.0.
@@ -39,7 +39,7 @@
 Команды выполнять в терминале Ubuntu/WSL.
 
 ```bash
-cd /mnt/d/projects/slt-plus/src/slt-mobile
+cd /mnt/d/projects/speech-studio/src/speechstudio-mobile
 
 java -version
 echo "JAVA_HOME=$JAVA_HOME"
@@ -70,10 +70,10 @@ sdk.dir=/home/<linux-user>/Android/Sdk
 
 ## Стандартная сборка
 
-Из корня модуля `src/slt-mobile`:
+Из корня модуля `src/speechstudio-mobile`:
 
 ```bash
-cd /mnt/d/projects/slt-plus/src/slt-mobile
+cd /mnt/d/projects/speech-studio/src/speechstudio-mobile
 ./gradlew assembleDebug -PwslDebug
 ```
 
@@ -264,7 +264,7 @@ com.logoped_plus.wsl
 
 ## Быстрые команды
 
-Из `/mnt/d/projects/slt-plus/src/slt-mobile`:
+Из `/mnt/d/projects/speech-studio/src/speechstudio-mobile`:
 
 ```bash
 # Сборка (флаг -PwslDebug обязателен: ID com.logoped_plus.wsl, не конфликтует с Android Studio)

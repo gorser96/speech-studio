@@ -30,4 +30,4 @@
 
 ## Impact
 
-Android-проект `src/slt-mobile`: domain-модели и repository/use case, Room v3 → v4, ChildrenScreen/ChildrenViewModel, новые экраны карточки и тэгов, App/AppScreen/AppDrawer/AppContainer. Пакетная генерация требует нового транзакционного контракта вместо последовательных `addLesson`. Навигация и зависимости остаются ручными; сеть, Hilt и Navigation Compose для этой задачи не нужны. Существующие правила ручного создания и удаления занятий сохраняются.
+Android-проект `src/speechstudio-mobile`: domain-модели и repository/use case, Room v3 → v4, ChildrenScreen/ChildrenViewModel, новые экраны карточки и тэгов, App/AppScreen/AppDrawer/AppContainer. Пакетная генерация требует нового транзакционного контракта вместо последовательных `addLesson`. Навигация и зависимости остаются ручными; сеть, Hilt и Navigation Compose для этой задачи не нужны. Существующие правила ручного создания и удаления занятий сохраняются.

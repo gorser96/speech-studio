@@ -19,4 +19,4 @@
 
 ## Impact
 
-`src/slt-mobile`: `RecurringLessonPlanner` (чистый планировщик), `GenerationCounts`, `LessonDao.generateForChild` (чтение только шаблона и занятий ребёнка), текст результата в карточке, unit/интеграционные тесты и текст androidTest. БД, миграции, навигация и DI не затрагиваются.
+`src/speechstudio-mobile`: `RecurringLessonPlanner` (чистый планировщик), `GenerationCounts`, `LessonDao.generateForChild` (чтение только шаблона и занятий ребёнка), текст результата в карточке, unit/интеграционные тесты и текст androidTest. БД, миграции, навигация и DI не затрагиваются.

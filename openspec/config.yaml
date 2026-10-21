@@ -1,11 +1,11 @@
 schema: spec-driven
 
 context: |
-  Кабинет речи — Android, Kotlin, Jetpack Compose, один модуль app, offline-first; backend и синхронизация вне MVP.
+  SpeechStudio — Android, Kotlin, Jetpack Compose, один модуль app, offline-first; backend и синхронизация вне MVP.
   До проектирования и реализации обязательно прочитай ARCHITECTURE.md и следуй применимым решениям.
   Фактическое состояние проверяй по исходникам и Gradle; целевые технологии не считай реализованными.
   Навигация и проверки: AGENTS.md, PACKAGES.md и PACKAGE.md только затронутых пакетов.
-  Запуск эмулятора Pixel 7a, установка и ручная проверка приложения: src/slt-mobile/TESTING.md.
+  Запуск эмулятора Pixel 7a, установка и ручная проверка приложения: src/speechstudio-mobile/TESTING.md.
   Временно (добавлено 2026-09-30 13:34, снятие только явным решением пользователя): тестирование на эмуляторах отключено — не запускать эмулятор, не устанавливать приложение и не выполнять connectedDebugAndroidTest; проверяй только unit-тестами и ручным осмотром кода.
   Контракты: openspec/specs/; индекс и процесс: openspec/README.md. Статус приёмки: openspec/verification/README.md.
   Пиши по-русски, сохраняя служебный формат OpenSpec. Короткие артефакты, ссылки вместо повторов.

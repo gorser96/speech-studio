@@ -1,6 +1,6 @@
 ## 1. Алгоритм раскладки пересечений
 
-- [x] 1.1 Заменить фиксированные два столбика и группы «ещё N» в `WeekTimeline.kt` на минимальную раскраску интервалов внутри кластера: `WeekLessonSpan` получает `laneCount`, `WeekExtraGroup`/`extraGroups` и логика скрытия удаляются, `isHourEmpty` считается по видимым spans; функцию переименовать в `buildDayTimeline`. Проверка: обновлённый `WeekTimelineTest` (одно занятие — вся ширина, два пересечения — два столбика, три — три столбика, цепочка — два столбика, касание — без столбиков, полночь) проходит: `gradlew :app:testDebugUnitTest --tests "com.logoped_plus.ui.screen.schedule.WeekTimelineTest"` (из корня `src/slt-mobile/`).
+- [x] 1.1 Заменить фиксированные два столбика и группы «ещё N» в `WeekTimeline.kt` на минимальную раскраску интервалов внутри кластера: `WeekLessonSpan` получает `laneCount`, `WeekExtraGroup`/`extraGroups` и логика скрытия удаляются, `isHourEmpty` считается по видимым spans; функцию переименовать в `buildDayTimeline`. Проверка: обновлённый `WeekTimelineTest` (одно занятие — вся ширина, два пересечения — два столбика, три — три столбика, цепочка — два столбика, касание — без столбиков, полночь) проходит: `gradlew :app:testDebugUnitTest --tests "com.logoped_plus.ui.screen.schedule.WeekTimelineTest"` (из корня `src/speechstudio-mobile/`).
 
 ## 2. Состояние и навигация
 

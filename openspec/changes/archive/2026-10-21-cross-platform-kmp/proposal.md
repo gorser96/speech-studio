@@ -26,4 +26,4 @@
 
 ## Impact
 
-`src/slt-mobile`: `settings.gradle.kts`, корневой и модульные build-файлы, `libs.versions.toml`, перенос ~100 Kotlin-файлов в `:shared`, Room-схемы и миграции, `AndroidManifest.xml`, debug-probe-сервисы, unit- и androidTest-проверки. Добавляются `iosApp` и macOS-проверка сборки iOS. Новые зависимости: Compose Multiplatform, Room KMP, `sqlite-bundled`, `kotlinx-datetime`, lifecycle KMP, `ui-backhandler`. Android-установки сохраняют `children.db` и настройки; на iOS данные начинаются с пустого локального хранилища. Сеть, backend и синхронизация не добавляются.
+`src/speechstudio-mobile`: `settings.gradle.kts`, корневой и модульные build-файлы, `libs.versions.toml`, перенос ~100 Kotlin-файлов в `:shared`, Room-схемы и миграции, `AndroidManifest.xml`, debug-probe-сервисы, unit- и androidTest-проверки. Добавляются `iosApp` и macOS-проверка сборки iOS. Новые зависимости: Compose Multiplatform, Room KMP, `sqlite-bundled`, `kotlinx-datetime`, lifecycle KMP, `ui-backhandler`. Android-установки сохраняют `children.db` и настройки; на iOS данные начинаются с пустого локального хранилища. Сеть, backend и синхронизация не добавляются.

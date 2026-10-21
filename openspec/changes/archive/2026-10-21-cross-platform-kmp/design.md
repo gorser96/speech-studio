@@ -21,7 +21,7 @@
 ### 1. Модули и плагины
 
 ```text
-src/slt-mobile/
+src/speechstudio-mobile/
 ├── shared/   Kotlin Multiplatform: commonMain / androidMain / iosMain
 ├── app/      com.android.application, тонкая оболочка
 └── iosApp/   Xcode-проект, SwiftUI + ComposeUIViewController
@@ -89,7 +89,7 @@ Android-тест миграции продолжает открывать неп
 
 Все экраны, компоненты и темы переносятся в `commonMain` на Compose Multiplatform. `LocalContext` удаляется из общего кода: выбор видео, открытие файла, настройки и завершение приложения приходят через контейнер и `expect`-composable. `AppScreen` и ручная навигация сохраняются.
 
-Dynamic color остаётся функцией Android: общий `LogopedPlusTheme` получает `ColorScheme?` от `expect`-функции, Android возвращает dynamic-схему на API 31+, iOS — `null`, затем используются общие светлая и тёмная схемы. Логотип из `R.drawable.icon1024` переносится в Compose Resources (`shared/src/commonMain/composeResources`), чтобы drawer не зависел от Android-ресурсов; иконки приложения остаются платформенными.
+Dynamic color остаётся функцией Android: общий `SpeechStudioTheme` получает `ColorScheme?` от `expect`-функции, Android возвращает dynamic-схему на API 31+, iOS — `null`, затем используются общие светлая и тёмная схемы. Логотип из `R.drawable.icon1024` переносится в Compose Resources (`shared/src/commonMain/composeResources`), чтобы drawer не зависел от Android-ресурсов; иконки приложения остаются платформенными.
 
 `BackHandler` заменяется общим `PlatformBackHandler`: Android actual использует `androidx.compose.ui.backhandler.BackHandler` из `ui-backhandler` 1.10.3, iOS actual не перехватывает системный жест. На iOS в заголовке показывается экранное действие «Назад» для вложенных экранов и корневых разделов, возвращающее тем же обработчикам, что Android-back; доступ к остальным разделам сохраняется через меню (отдельное действие в заголовке или прежний drawer). На корневом расписании iOS действие выхода отсутствует; приложение уходит в фон системным жестом. Android сохраняет диалог подтверждения и `finish()`.
 
@@ -97,7 +97,7 @@ Dynamic color остаётся функцией Android: общий `LogopedPlus
 
 `AppContainer` становится общим и принимает платформенные зависимости: готовую `ChildrenDatabase`, `SettingsRepository`, `VideoLibrary`, `CoroutineScope` и `Clock`. `VideoPicker`/`VideoAccess` остаются Compose-адаптерами (`rememberVideoEnvironment`), а выход из приложения — функцией оболочки. Android-фабрика создаёт контейнер из `Application` и сохраняет текущие имена репозиториев/use case; iOS-фабрика — из `NSUserDefaults` и каталога Application Support. Ручная DI сохраняется; Hilt не добавляется.
 
-`MainActivity` остаётся тонкой: edge-to-edge и `setContent { LogopedPlusTheme { App(container) } }`. `iosApp` содержит минимальное SwiftUI-приложение и `UIViewControllerRepresentable`, возвращающий `ComposeUIViewController { App(container) }`; контейнер живёт столько же, сколько приложение. ViewModel создаются существующими фабриками, но на общем `lifecycle-viewmodel-compose` KMP.
+`MainActivity` остаётся тонкой: edge-to-edge и `setContent { SpeechStudioTheme { App(container) } }`. `iosApp` содержит минимальное SwiftUI-приложение и `UIViewControllerRepresentable`, возвращающий `ComposeUIViewController { App(container) }`; контейнер живёт столько же, сколько приложение. ViewModel создаются существующими фабриками, но на общем `lifecycle-viewmodel-compose` KMP.
 
 ### 9. Этапы и обратимость
 
