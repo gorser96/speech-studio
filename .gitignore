@@ -1,1 +1,47 @@
-/.idea/gradle.xml
+# Единый список игнорируемых файлов для всего репозитория.
+# Проект: Android/KMP (src/speechstudio-mobile) + iOS (iosApp).
+
+# --- IntelliJ IDEA / Android Studio ---
+# Настройки IDE и машины: у каждого разработчика свои.
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# --- Gradle / Kotlin / сборка Android ---
+.gradle/
+.kotlin/
+build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.hprof
+
+# --- Подписи и секреты ---
+*.jks
+*.keystore
+*.p12
+keystore.properties
+
+# --- Xcode / iOS ---
+# Xcode: пользовательские настройки проекта и локальные артефакты.
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+
+# --- Node.js ---
+node_modules/
+
+# --- ОС и временные файлы ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
+*.class
