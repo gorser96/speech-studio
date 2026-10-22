@@ -9,7 +9,9 @@ data class Lesson(
     val scheduledAt: LocalDateTime,
     val durationMinutes: Int,
     val comment: String = "",
-    val videoAttachments: List<VideoAttachment> = emptyList()
+    val videoAttachments: List<VideoAttachment> = emptyList(),
+    val type: LessonType = LessonType.INDIVIDUAL,
+    val shiftId: String? = null
 )
 
 data class LessonParticipant(

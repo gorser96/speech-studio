@@ -19,7 +19,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Проверяет на iOS bundled SQLite: переоткрытие файла БД и миграции 1→4 и 3→4.
+ * Проверяет на iOS bundled SQLite: переоткрытие файла БД и миграции 1→5 и 3→5.
  */
 class IosDatabasePersistenceTest {
 
@@ -61,7 +61,7 @@ class IosDatabasePersistenceTest {
     }
 
     @Test
-    fun migration1To4PreservesChildrenAndCreatesTables() = runTest {
+    fun migration1ToLatestPreservesChildrenAndCreatesTables() = runTest {
         val path = tempDatabasePath()
         try {
             writeRawDatabase(
@@ -91,7 +91,7 @@ class IosDatabasePersistenceTest {
     }
 
     @Test
-    fun migration3To4PreservesLessonParticipantsAndVideos() = runTest {
+    fun migration3ToLatestPreservesLessonParticipantsAndVideos() = runTest {
         val path = tempDatabasePath()
         try {
             writeRawDatabase(

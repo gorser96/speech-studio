@@ -10,6 +10,7 @@ import com.logoped_plus.domain.model.ChildSchedule
 import com.logoped_plus.domain.model.GenerationCounts
 import com.logoped_plus.domain.model.Lesson
 import com.logoped_plus.domain.model.LessonSpan
+import com.logoped_plus.domain.model.LessonType
 import com.logoped_plus.domain.model.WeeklyLessonSlot
 import com.logoped_plus.domain.repository.GenerateChildLessonsResult
 import com.logoped_plus.domain.repository.LessonWriteResult
@@ -96,7 +97,8 @@ abstract class LessonDao {
                 plan.lessons.forEach { planned ->
                     val id = randomUuidString()
                     insertLesson(LessonEntity(id = id, scheduledEpochDay = planned.startEpochDay,
-                        scheduledNanoOfDay = planned.startNanoOfDay, durationMinutes = planned.durationMinutes, comment = ""))
+                        scheduledNanoOfDay = planned.startNanoOfDay, durationMinutes = planned.durationMinutes,
+                        comment = "", type = LessonType.INDIVIDUAL.name))
                     insertParticipants(listOf(LessonParticipantEntity(id, childId, null, 0)))
                 }
                 return GenerateChildLessonsResult.Success(plan.counts)
@@ -136,5 +138,6 @@ internal fun invalidReason(lesson: Lesson): LessonWriteResult.Reason? =
         lesson.participants.any { it.childId.isBlank() } ||
         lesson.participants.map { it.childId }.distinct().size != lesson.participants.size ||
         lesson.videoAttachments.any { it.uri.isBlank() } ||
-        lesson.videoAttachments.map { it.uri }.distinct().size != lesson.videoAttachments.size)
+        lesson.videoAttachments.map { it.uri }.distinct().size != lesson.videoAttachments.size ||
+        (lesson.type == LessonType.GROUP && lesson.shiftId != null))
         LessonWriteResult.Reason.InvalidData else null

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.logoped_plus.domain.model.Child
+import com.logoped_plus.domain.model.LessonType
 import com.logoped_plus.ui.components.NumberField
 import com.logoped_plus.ui.screen.schedule.component.*
 import kotlinx.datetime.LocalDate
@@ -32,6 +33,8 @@ internal fun LessonForm(
     fun text(field: LessonTextField, value: String) { if (enabled) onAction(ScheduleAction.ChangeText(editor.sessionId, field, value)) }
     Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(if (creating) "Новое занятие" else "Редактирование занятия", style = MaterialTheme.typography.titleLarge)
+        Text(lessonTypeTitle(editor.type), style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
         LessonDateTimeFields(
             date = LocalDate.fromEpochDays(editor.epochDay), onDateChange = { onAction(ScheduleAction.ChangeDate(editor.sessionId, it)) },
             time = editor.time, onTimeChange = { text(LessonTextField.TIME, it) }, enabled = enabled
@@ -50,8 +53,10 @@ internal fun LessonForm(
             )
             Spacer(Modifier.weight(1f))
         }
-        Text("Дети", style = MaterialTheme.typography.titleMedium)
+        Text(if (editor.type == LessonType.GROUP) "Дети (двое и более)" else "Ребёнок",
+            style = MaterialTheme.typography.titleMedium)
         ChildMultiSelectField(children = children, selectedChildIds = editor.participants.filter { it.removedName == null }.map { it.childId }.toSet(), enabled = enabled && childrenReady,
+            singleSelection = editor.type != LessonType.GROUP,
             onSelectionChange = { onAction(ScheduleAction.ChangeChildren(editor.sessionId, it.toList())) })
         if (!creating) {
             OutlinedTextField(value = editor.comment, onValueChange = { text(LessonTextField.COMMENT, it) }, enabled = enabled,

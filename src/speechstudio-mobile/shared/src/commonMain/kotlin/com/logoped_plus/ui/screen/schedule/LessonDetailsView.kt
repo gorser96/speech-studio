@@ -127,7 +127,7 @@ fun LessonDetailsView(
 
         LessonDetailsRow(
             title = "Тип",
-            value = if (uiModel.participantCount > 1) "Групповое занятие" else "Индивидуальное занятие"
+            value = lessonTypeTitle(uiModel.type)
         )
 
         HorizontalDivider()

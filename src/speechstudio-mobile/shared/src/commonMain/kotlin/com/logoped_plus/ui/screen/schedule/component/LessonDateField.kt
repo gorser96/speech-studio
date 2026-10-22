@@ -38,7 +38,8 @@ fun LessonDateField(
     date: LocalDate,
     onDateChange: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    label: String = "Дата"
 ) {
     var showPicker by rememberSaveable { mutableStateOf(false) }
 
@@ -49,7 +50,7 @@ fun LessonDateField(
             onValueChange = {},
             readOnly = true,
             singleLine = true,
-            label = { Text("Дата") },
+            label = { Text(label) },
             trailingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
             modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }
         )
@@ -57,7 +58,7 @@ fun LessonDateField(
         Box(
             modifier = Modifier.matchParentSize()
                 .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Выбрать дату") { showPicker = true }
-                .semantics { contentDescription = "Дата: $formattedDate" }
+                .semantics { contentDescription = "$label: $formattedDate" }
         )
     }
 

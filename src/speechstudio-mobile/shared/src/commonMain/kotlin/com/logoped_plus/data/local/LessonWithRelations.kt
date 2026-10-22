@@ -4,6 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import com.logoped_plus.domain.model.Lesson
 import com.logoped_plus.domain.model.LessonParticipant
+import com.logoped_plus.domain.model.LessonType
 import com.logoped_plus.domain.model.VideoAttachment
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -24,7 +25,9 @@ fun LessonWithRelations.toDomain() = Lesson(
     durationMinutes = lesson.durationMinutes,
     comment = lesson.comment,
     participants = participants.sortedBy { it.ordinal }.map { LessonParticipant(it.childId, it.childName) },
-    videoAttachments = videos.sortedBy { it.ordinal }.map { VideoAttachment(it.uri) }
+    videoAttachments = videos.sortedBy { it.ordinal }.map { VideoAttachment(it.uri) },
+    type = LessonType.fromStorage(lesson.type),
+    shiftId = lesson.shiftId
 )
 
 fun Lesson.toEntity(position: Long = 0) = LessonEntity(
@@ -33,5 +36,7 @@ fun Lesson.toEntity(position: Long = 0) = LessonEntity(
     scheduledAt.date.toEpochDays(),
     scheduledAt.time.toNanosecondOfDay(),
     durationMinutes,
-    comment
+    comment,
+    type.name,
+    shiftId
 )

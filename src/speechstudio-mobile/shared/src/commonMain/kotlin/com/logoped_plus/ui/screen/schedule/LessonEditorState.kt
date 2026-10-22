@@ -2,6 +2,7 @@ package com.logoped_plus.ui.screen.schedule
 
 import com.logoped_plus.domain.model.Lesson
 import com.logoped_plus.domain.model.LessonParticipant
+import com.logoped_plus.domain.model.LessonType
 import com.logoped_plus.domain.model.VideoAttachment
 import com.logoped_plus.domain.repository.LessonWriteResult
 import com.logoped_plus.domain.text.RussianText
@@ -29,15 +30,31 @@ data class LessonEditorState(
     val participants: List<LessonParticipant> = emptyList(),
     val comment: String = "",
     val videoUris: List<String> = emptyList(),
+    val type: LessonType = LessonType.INDIVIDUAL,
     val status: LessonEditorStatus = LessonEditorStatus.Idle
 ) {
     val saving: Boolean get() = status is LessonEditorStatus.Saving
     val changed: Boolean get() = toLesson() != original
 
+    /**
+     * Число участников с учётом сохранённого типа: индивидуальное — ровно один,
+     * групповое при создании — два и более, при редактировании — один и более.
+     */
+    val participantsValid: Boolean
+        get() {
+            if (participants.isEmpty()) return false
+            if (participants.map { it.childId }.distinct().size != participants.size) return false
+            return when {
+                type == LessonType.GROUP ->
+                    participants.size >= if (mode == LessonEditorMode.CREATE) 2 else 1
+                else -> participants.size == 1
+            }
+        }
+
     fun toLesson(): Lesson? {
         val timeOfDay = parseTimeText(time) ?: return null
         val minutes = duration.toIntOrNull()?.takeIf { it > 0 } ?: return null
-        if (participants.isEmpty() || participants.map { it.childId }.distinct().size != participants.size) return null
+        if (!participantsValid) return null
         val dateTime = try {
             // Material-only edits must retain seconds/nanoseconds from the original.
             val date = LocalDate.fromEpochDays(epochDay)
@@ -47,7 +64,8 @@ data class LessonEditorState(
         } catch (_: IllegalArgumentException) {
             return null
         }
-        return Lesson(lessonId, participants.toList(), dateTime, minutes, comment, videoUris.map(::VideoAttachment))
+        return Lesson(lessonId, participants.toList(), dateTime, minutes, comment,
+            videoUris.map(::VideoAttachment), type, original?.shiftId)
     }
 
     companion object {
@@ -56,7 +74,8 @@ data class LessonEditorState(
             epochDay = lesson.scheduledAt.date.toEpochDays(),
             time = RussianText.formatTime(lesson.scheduledAt.time),
             duration = lesson.durationMinutes.toString(), participants = lesson.participants.toList(),
-            comment = lesson.comment, videoUris = lesson.videoAttachments.map { it.uri }
+            comment = lesson.comment, videoUris = lesson.videoAttachments.map { it.uri },
+            type = lesson.type
         )
     }
 }

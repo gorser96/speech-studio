@@ -36,7 +36,9 @@ fun MonthScheduleView(
     onDateSelected: (LocalDate) -> Unit,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
-    onLessonClick: (LessonUiModel) -> Unit
+    onLessonClick: (LessonUiModel) -> Unit,
+    shifts: List<ShiftContainerUi> = emptyList(),
+    onShiftClick: (String) -> Unit = {}
 ) {
     CalendarView(
         displayedMonth = displayedMonth,
@@ -58,8 +60,9 @@ fun MonthScheduleView(
     val lessonsForSelectedDate = lessons
         .filter { it.scheduledAt.date == selectedDate }
         .sortedBy { it.scheduledAt.time }
+    val shiftsForSelectedDate = shifts.onDate(selectedDate)
 
-    if (lessonsForSelectedDate.isEmpty()) {
+    if (lessonsForSelectedDate.isEmpty() && shiftsForSelectedDate.isEmpty()) {
         Text(
             text = "На этот день занятий нет",
             style = MaterialTheme.typography.bodyLarge
@@ -68,6 +71,12 @@ fun MonthScheduleView(
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            shiftsForSelectedDate.forEach { container ->
+                ShiftContainerRow(
+                    container = container,
+                    onClick = { onShiftClick(container.shiftId) }
+                )
+            }
             lessonsForSelectedDate.forEach { uiModel ->
                 LessonItem(
                     uiModel = uiModel,

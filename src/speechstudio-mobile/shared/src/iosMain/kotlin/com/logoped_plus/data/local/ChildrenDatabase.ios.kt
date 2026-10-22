@@ -33,5 +33,10 @@ internal fun iosMigrations(): Array<Migration> = arrayOf(
         override fun migrate(connection: SQLiteConnection) {
             migrateToV4 { connection.execSQL(it) }
         }
+    },
+    object : Migration(4, 5) {
+        override fun migrate(connection: SQLiteConnection) {
+            migrateToV5 { connection.execSQL(it) }
+        }
     }
 )

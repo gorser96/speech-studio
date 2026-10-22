@@ -9,6 +9,10 @@ import com.logoped_plus.ui.screen.children.ChildrenViewModel
 import com.logoped_plus.ui.screen.children.ChildrenViewModelFactory
 import com.logoped_plus.ui.screen.schedule.ScheduleViewModel
 import com.logoped_plus.ui.screen.schedule.ScheduleViewModelFactory
+import com.logoped_plus.ui.screen.shift.ShiftViewModel
+import com.logoped_plus.ui.screen.shift.ShiftViewModelFactory
+import com.logoped_plus.ui.screen.shift.templates.ShiftTemplatesViewModel
+import com.logoped_plus.ui.screen.shift.templates.ShiftTemplatesViewModelFactory
 import com.logoped_plus.ui.screen.tags.TagsViewModel
 import com.logoped_plus.ui.screen.tags.TagsViewModelFactory
 
@@ -26,8 +30,19 @@ fun IosApp(container: AppContainer) {
             lessonRepository = container.lessonRepository,
             childRepository = container.childRepository,
             tagRepository = container.tagRepository,
+            shiftRepository = container.shiftRepository,
             settings = container.settings,
             findLessonVideos = container.findLessonVideos
+        )
+    )
+
+    val shiftViewModel: ShiftViewModel = viewModel(
+        factory = ShiftViewModelFactory(
+            shiftRepository = container.shiftRepository,
+            childRepository = container.childRepository,
+            lessonRepository = container.lessonRepository,
+            tagRepository = container.tagRepository,
+            findShiftVideos = container.findShiftVideos
         )
     )
 
@@ -38,6 +53,10 @@ fun IosApp(container: AppContainer) {
             generateChildLessons = container.generateChildLessons,
             settings = container.settings
         )
+    )
+
+    val shiftTemplatesViewModel: ShiftTemplatesViewModel = viewModel(
+        factory = ShiftTemplatesViewModelFactory(shiftRepository = container.shiftRepository)
     )
 
     val tagsViewModel: TagsViewModel = viewModel(
@@ -57,6 +76,8 @@ fun IosApp(container: AppContainer) {
         childrenViewModel = childrenViewModel,
         tagsViewModel = tagsViewModel,
         settingsViewModel = settingsViewModel,
+        shiftViewModel = shiftViewModel,
+        shiftTemplatesViewModel = shiftTemplatesViewModel,
         onExit = null,
         showSectionBack = true
     )

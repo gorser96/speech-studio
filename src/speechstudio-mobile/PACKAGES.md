@@ -6,26 +6,29 @@ Kotlin Multiplatform приложение: общий модуль `shared` (And
 
 | Package / описание | Что искать |
 |---|---|
-| [com.logoped_plus](app/src/main/java/com/logoped_plus/PACKAGE.md) | Android-запуск, `Application`, фабрика общего `AppContainer`, тонкая оболочка общего `App` |
+| [com.logoped_plus](app/src/main/java/com/logoped_plus/PACKAGE.md) | Android-запуск, `Application`, фабрика общего `AppContainer`, тонкая оболочка общего `App`, ViewModel смены |
 | [com.logoped_plus.app](shared/src/commonMain/kotlin/com/logoped_plus/app/PACKAGE.md) | Общий контейнер зависимостей: репозитории, use case, настройки, scope, закрытие БД |
-| [com.logoped_plus.data.local](shared/src/commonMain/kotlin/com/logoped_plus/data/local/PACKAGE.md) | Room-схема v4, миграции 1→2→3→4, DAO детей/занятий/тэгов/шаблонов, платформенные builder БД |
+| [com.logoped_plus.data.local](shared/src/commonMain/kotlin/com/logoped_plus/data/local/PACKAGE.md) | Room-схема v5, миграции 1→2→3→4→5, DAO детей/занятий/тэгов/шаблонов/смен, платформенные builder БД |
 | [com.logoped_plus.data.media](app/src/main/java/com/logoped_plus/data/media/PACKAGE.md) | Видео устройства через MediaStore (Android-реализация `VideoLibrary`) |
 | [com.logoped_plus.data.preferences](shared/src/commonMain/kotlin/com/logoped_plus/data/preferences/PACKAGE.md) | Общий контракт настроек; SharedPreferences на Android и `NSUserDefaults` на iOS |
-| [com.logoped_plus.data.repository](shared/src/commonMain/kotlin/com/logoped_plus/data/repository/PACKAGE.md) | Room-хранение детей, занятий, тэгов и шаблонов, атомарная карточка, пакетная генерация |
-| [com.logoped_plus.domain.model](shared/src/commonMain/kotlin/com/logoped_plus/domain/model/PACKAGE.md) | Структуры ребёнка, занятия, тэгов, видеовложений; чистая проверка шаблона |
-| [com.logoped_plus.domain.repository](shared/src/commonMain/kotlin/com/logoped_plus/domain/repository/PACKAGE.md) | Контракты доступа к детям, занятиям, тэгам и видео устройства; результат генерации |
+| [com.logoped_plus.data.repository](shared/src/commonMain/kotlin/com/logoped_plus/data/repository/PACKAGE.md) | Room-хранение детей, занятий, тэгов, шаблонов и смен, атомарная карточка, пакетные генерации |
+| [com.logoped_plus.domain.model](shared/src/commonMain/kotlin/com/logoped_plus/domain/model/PACKAGE.md) | Структуры ребёнка, занятия (тип, смена), тэгов, видеовложений, шаблона и слотов смены; чистые проверка шаблона и расчёт времени смены |
+| [com.logoped_plus.domain.repository](shared/src/commonMain/kotlin/com/logoped_plus/domain/repository/PACKAGE.md) | Контракты доступа к детям, занятиям, тэгам, сменам и видео устройства; результаты записи и генерации |
 | [com.logoped_plus.domain.text](shared/src/commonMain/kotlin/com/logoped_plus/domain/text/PACKAGE.md) | Детерминированные русские даты/время и сортировка имён без системной локали |
-| [com.logoped_plus.domain.usecase](shared/src/commonMain/kotlin/com/logoped_plus/domain/usecase/PACKAGE.md) | Use case выбора видео по интервалу занятия; чистый планировщик периодических занятий |
+| [com.logoped_plus.domain.usecase](shared/src/commonMain/kotlin/com/logoped_plus/domain/usecase/PACKAGE.md) | Use case выбора видео занятия и смены; чистые планировщики периодических занятий и генерации смен; сопоставление видео смены |
 | [com.logoped_plus.ios](shared/src/iosMain/kotlin/com/logoped_plus/ios/PACKAGE.md) | iOS-точка входа `ComposeUIViewController`, контейнер на Application Support/`NSUserDefaults`, ViewModels |
 | [com.logoped_plus.platform](shared/src/commonMain/kotlin/com/logoped_plus/platform/PACKAGE.md) | `expect`-адаптеры UUID и системного «Назад» |
 | [com.logoped_plus.platform.video](shared/src/commonMain/kotlin/com/logoped_plus/platform/video/PACKAGE.md) | Общий контракт выбора/просмотра видео; Android SAF/ACTION_VIEW и iOS document picker/bookmark/системный просмотр |
-| [com.logoped_plus.ui](shared/src/commonMain/kotlin/com/logoped_plus/ui/PACKAGE.md) | Общая оболочка `App`, боковое меню и список разделов |
+| [com.logoped_plus.ui](shared/src/commonMain/kotlin/com/logoped_plus/ui/PACKAGE.md) | Общая оболочка `App`, боковое меню, список разделов и маршрут экрана смены |
 | [com.logoped_plus.ui.components](shared/src/commonMain/kotlin/com/logoped_plus/ui/components/PACKAGE.md) | Единые контролы ввода времени «ЧЧ:ММ» и чисел |
-| [com.logoped_plus.ui.screen](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/PACKAGE.md) | Экраны разделов: дети, тэги, расписание, настройки |
+| [com.logoped_plus.ui.screen](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/PACKAGE.md) | Экраны разделов: дети, тэги, расписание с маршрутом смены, настройки |
 | [com.logoped_plus.ui.screen.children](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/children/PACKAGE.md) | Состояние списка и карточки ребёнка, добавление, тэги, шаблон, генерация, удаление |
-| [com.logoped_plus.ui.screen.schedule](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/schedule/PACKAGE.md) | Календарь, неделя, день, действия, состояние, создание/просмотр/редактирование/удаление занятия |
+| [com.logoped_plus.ui.screen.schedule](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/schedule/PACKAGE.md) | Календарь, неделя, день, действия, состояние, типы занятий, контейнеры смен, создание/просмотр/редактирование/удаление занятия |
 | [com.logoped_plus.ui.screen.schedule.component](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/schedule/component/PACKAGE.md) | Выбор нескольких детей, поиск по имени, выбор/открытие/открепление видео |
-| [com.logoped_plus.ui.screen.schedule.model](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/schedule/model/PACKAGE.md) | Данные занятия для отображения, имена детей и URI |
+| [com.logoped_plus.ui.screen.schedule.model](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/schedule/model/PACKAGE.md) | Данные занятия для отображения, имена детей, тип, ссылка на смену и URI |
+| [com.logoped_plus.ui.screen.shift](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/shift/PACKAGE.md) | Экран смены: состояние, окно/база/перерыв, слоты, создание занятий, разбор видео |
+| [com.logoped_plus.ui.screen.shift.component](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/shift/component/PACKAGE.md) | Множественный выбор существующих детей с поиском и фильтром по тэгам, подтверждение видео |
+| [com.logoped_plus.ui.screen.shift.templates](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/shift/templates/PACKAGE.md) | Раздел «Шаблоны смен»: список, редактор, удаление и генерация пустых смен |
 | [com.logoped_plus.ui.screen.tags](shared/src/commonMain/kotlin/com/logoped_plus/ui/screen/tags/PACKAGE.md) | Справочник «Тэги»: состояние, палитра цветов, редактор, удаление |
 | [com.logoped_plus.ui.theme](shared/src/commonMain/kotlin/com/logoped_plus/ui/theme/PACKAGE.md) | Compose-тема; dynamic color — Android actual, iOS — общие схемы |
 
@@ -33,6 +36,7 @@ Kotlin Multiplatform приложение: общий модуль `shared` (And
 
 - Запуск Android: `AndroidManifest.xml` → `MainActivity` → `SpeechStudioApplication`/`createAppContainer` → Android-оболочка `com.logoped_plus.App` → общий `com.logoped_plus.ui.App` → выбранный экран.
 - Запуск iOS: `iosApp` SwiftUI → `MainViewControllerKt.MainViewController()` → `createIosAppContainer` → `IosApp` → общий `com.logoped_plus.ui.App` → выбранный экран.
+- Экран смены: `App` (меню «+» → «Смена») или контейнер смены в сетке месяца/недели/дня → `ScheduleAction.StartCreatingShift`/`OpenShift` → `ScheduleUiState.openShiftId` → `ScheduleScreen` показывает `ShiftScreen` → `ShiftViewModel` → `ShiftRepository` → `RoomShiftRepository` → `ShiftDao`.
 - Изменение занятия: `ScheduleScreen` → форма из `ui.screen.schedule` → `ScheduleAction` → `ScheduleViewModel` → `LessonRepository` → `RoomLessonRepository` → обновлённый `ScheduleUiState`.
 - Изменение имени/тэгов/шаблона ребёнка: `ChildrenScreen` → карточка (`ChildCardView`) → `ChildrenViewModel` → `ChildRepository.saveCard`/`TagRepository` → `RoomChildRepository` → `ChildDao.saveCardOnce` (одна транзакция: имя + child_tags + child_schedule(_slots)) → observeCard обновляет карточку, Flow обновляет список и расписание.
 - Периодические занятия: карточка «Создать занятия» → `ChildrenViewModel.generateLessons` → `GenerateChildLessonsUseCase` (Clock) → `LessonRepository.generateChildLessons` → `RoomLessonRepository` → `LessonDao.generateForChild` (одна Room-транзакция: чтение актуального шаблона и занятий ребёнка, чистый `RecurringLessonPlanner`, пакетная вставка) → счётчики в карточке, расписание обновляется через Flow.
@@ -56,4 +60,4 @@ Kotlin Multiplatform приложение: общий модуль `shared` (And
 | [settings.gradle.kts](settings.gradle.kts), [build.gradle.kts](build.gradle.kts), [gradle/libs.versions.toml](gradle/libs.versions.toml) | Модули, плагины, версии зависимостей |
 | [ARCHITECTURE.md](ARCHITECTURE.md), [описание проекта.md](<../../описание проекта.md>) | Архитектурный план и продуктовый контекст |
 
-Дети, занятия, тэги и шаблоны сохраняются в Room БД между запусками. Начальные списки пусты. Android использует прежний файл `children.db` и системный драйвер; iOS — bundled SQLite и путь в Application Support. Зависимости собираются общим `com.logoped_plus.app.AppContainer` из платформенных БД, настроек и источника видео. Hilt и Navigation Compose не подключены. Robolectric подключён только для локальных проверок Room на Android. iOS-код компилируется в klib на Windows, но Xcode-сборка и запуск выполняются только на macOS.
+Дети, занятия, тэги, шаблоны и смены сохраняются в Room БД между запусками. Начальные списки пусты. Android использует прежний файл `children.db` и системный драйвер; iOS — bundled SQLite и путь в Application Support. Зависимости собираются общим `com.logoped_plus.app.AppContainer` из платформенных БД, настроек и источника видео. Hilt и Navigation Compose не подключены. Robolectric подключён только для локальных проверок Room на Android. iOS-код компилируется в klib на Windows, но Xcode-сборка и запуск выполняются только на macOS.

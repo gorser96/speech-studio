@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.logoped_plus.data.preferences.SettingsRepository
 import com.logoped_plus.domain.model.Lesson
 import com.logoped_plus.domain.model.LessonParticipant
+import com.logoped_plus.domain.model.LessonType
+import com.logoped_plus.domain.model.WorkShift
 import com.logoped_plus.domain.repository.*
 import com.logoped_plus.domain.text.RussianText
 import com.logoped_plus.domain.usecase.FindLessonVideosUseCase
@@ -26,6 +28,7 @@ class ScheduleViewModel(
     private val lessonRepository: LessonRepository,
     private val childRepository: ChildRepository,
     private val tagRepository: TagRepository,
+    private val shiftRepository: ShiftRepository,
     private val settings: SettingsRepository,
     private val findLessonVideos: FindLessonVideosUseCase,
     clock: Clock = Clock.System,
@@ -36,6 +39,7 @@ class ScheduleViewModel(
     private val mutableState = MutableStateFlow(ScheduleUiState(
         selectedDate = today, displayedMonth = today.firstOfMonth(), displayedWeekStart = today.startOfWeek(),
         childLoadState = childRepository.state.value, lessonLoadState = lessonRepository.state.value,
+        shiftLoadState = shiftRepository.state.value, shifts = shiftRepository.state.value.shifts,
         children = childRepository.state.value.children, weekendHidden = settings.hideWeekend.value,
         gridStartHour = settings.gridStartHour.value, gridEndHour = settings.gridEndHour.value,
         visibleTagsLimit = settings.visibleTagsLimit.value
@@ -45,7 +49,7 @@ class ScheduleViewModel(
     init {
         refresh()
         viewModelScope.launch {
-            combine(childRepository.state, lessonRepository.state, tagRepository.state) { _, _, _ -> Unit }
+            combine(childRepository.state, lessonRepository.state, tagRepository.state, shiftRepository.state) { _, _, _, _ -> Unit }
                 .collect { refresh() }
         }
         viewModelScope.launch {
@@ -65,7 +69,8 @@ class ScheduleViewModel(
     private fun refresh(
         children: ChildLoadState = childRepository.state.value,
         loaded: LessonLoadState = lessonRepository.state.value,
-        tags: TagLoadState = tagRepository.state.value
+        tags: TagLoadState = tagRepository.state.value,
+        shifts: ShiftLoadState = shiftRepository.state.value
     ) {
         val committed = confirmed
         if (loaded is LessonLoadState.Ready && committed != null && loaded.lessons.any { it == committed }) confirmed = null
@@ -81,6 +86,7 @@ class ScheduleViewModel(
         // A missing row must not discard a draft. Names can change independently of its raw input.
         val selected = editor?.takeIf { it.mode != LessonEditorMode.CREATE }?.original?.let { toUiModel(it, children, tags) }
         mutableState.value = state.copy(childLoadState = children, lessonLoadState = loaded, children = children.children,
+            shiftLoadState = shifts, shifts = shifts.shifts,
             lessons = models, editor = editor, detailsDraft = if (closed) null else state.detailsDraft,
             selectedLesson = selected, isCreatingLesson = editor?.mode == LessonEditorMode.CREATE,
             isEditingLesson = editor?.mode == LessonEditorMode.EDIT,
@@ -94,11 +100,15 @@ class ScheduleViewModel(
         when (action) {
             ScheduleAction.RetryChildren -> childRepository.retryLoading()
             ScheduleAction.RetryLessons -> lessonRepository.retryLoading()
+            ScheduleAction.RetryShifts -> shiftRepository.retryLoading()
             is ScheduleAction.StartCreatingLesson -> {
                 val date = action.scheduledAt ?: state.selectedDate.atStartOfDay()
                 setEditor(LessonEditorState(mode = LessonEditorMode.CREATE, epochDay = date.date.toEpochDays(),
-                    time = RussianText.formatTime(date.time)))
+                    time = RussianText.formatTime(date.time), type = action.type))
             }
+            is ScheduleAction.StartCreatingShift -> startCreatingShift(action.date ?: state.selectedDate)
+            is ScheduleAction.OpenShift -> mutableState.value = state.copy(openShiftId = action.shiftId, shiftMessage = null)
+            ScheduleAction.CloseShift -> mutableState.value = state.copy(openShiftId = null, shiftMessage = null)
             is ScheduleAction.SelectLesson -> {
                 val lesson = confirmed?.takeIf { it.id == action.lessonId }
                     ?: lessonRepository.state.value.lessons.find { it.id == action.lessonId } ?: return
@@ -121,7 +131,9 @@ class ScheduleViewModel(
             }
             is ScheduleAction.ChangeDate -> change(action.sessionId) { if (it.mode == LessonEditorMode.DETAILS) it else it.copy(epochDay = action.date.toEpochDays()) }
             is ScheduleAction.ChangeChildren -> change(action.sessionId) { if (it.mode == LessonEditorMode.DETAILS) it
-                else it.copy(participants = action.ids.distinct().map { id -> LessonParticipant(id) } + it.participants.filter { it.removedName != null }) }
+                else if (it.type == LessonType.GROUP)
+                    it.copy(participants = action.ids.distinct().map { id -> LessonParticipant(id) } + it.participants.filter { it.removedName != null })
+                else it.copy(participants = action.ids.distinct().map { id -> LessonParticipant(id) }) }
             is ScheduleAction.ChangeVideos -> change(action.sessionId) { if (it.mode == LessonEditorMode.CREATE) it else it.copy(videoUris = action.uris.distinct()) }
             is ScheduleAction.AutoAttachLessonVideos -> autoAttach(action.sessionId)
             is ScheduleAction.ConfirmLesson -> confirm(action.sessionId)
@@ -143,6 +155,22 @@ class ScheduleViewModel(
     private fun change(sessionId: String, transform: (LessonEditorState) -> LessonEditorState) {
         val editor = mutableState.value.editor?.takeIf { it.sessionId == sessionId } ?: return
         setEditor(transform(editor).copy(status = LessonEditorStatus.Idle), keepDetails = true)
+    }
+
+    private fun startCreatingShift(date: LocalDate) {
+        if (shiftRepository.state.value !is ShiftLoadState.Ready) {
+            mutableState.value = mutableState.value.copy(shiftMessage = "Дождитесь загрузки смен и повторите.")
+            return
+        }
+        val shift = WorkShift(id = randomUuidString(), date = date)
+        mutableState.value = mutableState.value.copy(shiftMessage = null)
+        viewModelScope.launch {
+            when (val result = shiftRepository.createShift(shift)) {
+                ShiftWriteResult.Success -> mutableState.value = mutableState.value.copy(openShiftId = shift.id)
+                is ShiftWriteResult.Failure ->
+                    mutableState.value = mutableState.value.copy(shiftMessage = shiftWriteErrorText(result.reason))
+            }
+        }
     }
 
     private fun setEditor(editor: LessonEditorState?, keepDetails: Boolean = false) {
@@ -231,6 +259,6 @@ class ScheduleViewModel(
         }
         return LessonUiModel(lesson.id, lesson.scheduledAt, lesson.durationMinutes,
             names, lesson.comment, lesson.participants.size,
-            lesson.videoAttachments.map { it.uri }, participants)
+            lesson.videoAttachments.map { it.uri }, participants, lesson.type, lesson.shiftId)
     }
 }

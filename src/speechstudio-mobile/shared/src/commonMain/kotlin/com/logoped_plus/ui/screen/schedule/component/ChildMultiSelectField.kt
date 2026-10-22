@@ -34,7 +34,8 @@ fun ChildMultiSelectField(
     enabled: Boolean = true,
     children: List<Child>,
     selectedChildIds: Set<String>,
-    onSelectionChange: (Set<String>) -> Unit
+    onSelectionChange: (Set<String>) -> Unit,
+    singleSelection: Boolean = false
 ) {
     var isOpen by remember {
         mutableStateOf(false)
@@ -106,6 +107,15 @@ fun ChildMultiSelectField(
         }
     }
 
+    val applySelection: (String, Boolean) -> Unit = { id, checked ->
+        val next = when {
+            singleSelection -> if (checked) setOf(id) else emptySet()
+            checked -> selectedChildIds + id
+            else -> selectedChildIds - id
+        }
+        if (enabled) onSelectionChange(next)
+    }
+
     if (isOpen && enabled) {
         ModalBottomSheet(
             onDismissRequest = {
@@ -161,28 +171,14 @@ fun ChildMultiSelectField(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(enabled = enabled) {
-                                    val newSelection =
-                                        if (child.id in selectedChildIds) {
-                                            selectedChildIds - child.id
-                                        } else {
-                                            selectedChildIds + child.id
-                                        }
-
-                                    if (enabled) onSelectionChange(newSelection)
+                                    applySelection(child.id, child.id !in selectedChildIds)
                                 },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Checkbox(enabled = enabled,
                                 checked = child.id in selectedChildIds,
                                 onCheckedChange = { checked ->
-                                    val newSelection =
-                                        if (checked) {
-                                            selectedChildIds + child.id
-                                        } else {
-                                            selectedChildIds - child.id
-                                        }
-
-                                    if (enabled) onSelectionChange(newSelection)
+                                    applySelection(child.id, checked)
                                 }
                             )
 

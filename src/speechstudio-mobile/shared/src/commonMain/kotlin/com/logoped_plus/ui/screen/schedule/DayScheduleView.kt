@@ -30,7 +30,9 @@ fun DayScheduleView(
     onEmptyHourDoubleClick: (LocalDateTime) -> Unit,
     modifier: Modifier = Modifier,
     gridStartHour: Int = 0,
-    gridEndHour: Int = 24
+    gridEndHour: Int = 24,
+    shifts: List<ShiftContainerUi> = emptyList(),
+    onShiftClick: (String) -> Unit = {}
 ) {
     val gridRange = effectiveGridRange(gridStartHour, gridEndHour)
     val rows = gridRange.last - gridRange.first + 1
@@ -119,6 +121,20 @@ fun DayScheduleView(
                                     .then(emptyHourModifier)
                             )
                         }
+                    }
+                    shifts.onDate(date).forEach { container ->
+                        val top = hourHeight * ((container.startMinute - gridRange.first * 60f) / 60f)
+                        val span = hourHeight * ((container.endMinute - container.startMinute).coerceAtLeast(0) / 60f)
+                        ShiftContainerStrip(
+                            container = container,
+                            onClick = { onShiftClick(container.shiftId) },
+                            modifier = Modifier
+                                .offset(x = 0.dp, y = top)
+                                .width(dayWidth)
+                                .height(span)
+                                .padding(horizontal = 1.dp)
+                                .clipToBounds()
+                        )
                     }
                     timeline.spans.forEach { span ->
                         val lanes = span.laneCount ?: 1

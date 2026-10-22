@@ -12,6 +12,10 @@ import com.logoped_plus.ui.screen.children.ChildrenViewModel
 import com.logoped_plus.ui.screen.children.ChildrenViewModelFactory
 import com.logoped_plus.ui.screen.schedule.ScheduleViewModel
 import com.logoped_plus.ui.screen.schedule.ScheduleViewModelFactory
+import com.logoped_plus.ui.screen.shift.ShiftViewModel
+import com.logoped_plus.ui.screen.shift.ShiftViewModelFactory
+import com.logoped_plus.ui.screen.shift.templates.ShiftTemplatesViewModel
+import com.logoped_plus.ui.screen.shift.templates.ShiftTemplatesViewModelFactory
 import com.logoped_plus.ui.screen.tags.TagsViewModel
 import com.logoped_plus.ui.screen.tags.TagsViewModelFactory
 
@@ -22,6 +26,7 @@ fun App() {
     val lessonRepository = container.lessonRepository
     val childRepository = container.childRepository
     val tagRepository = container.tagRepository
+    val shiftRepository = container.shiftRepository
     val settings = container.settings
 
     val scheduleViewModel: ScheduleViewModel = viewModel(
@@ -29,9 +34,24 @@ fun App() {
             lessonRepository = lessonRepository,
             childRepository = childRepository,
             tagRepository = tagRepository,
+            shiftRepository = shiftRepository,
             settings = settings,
             findLessonVideos = container.findLessonVideos
         )
+    )
+
+    val shiftViewModel: ShiftViewModel = viewModel(
+        factory = ShiftViewModelFactory(
+            shiftRepository = shiftRepository,
+            childRepository = childRepository,
+            lessonRepository = lessonRepository,
+            tagRepository = tagRepository,
+            findShiftVideos = container.findShiftVideos
+        )
+    )
+
+    val shiftTemplatesViewModel: ShiftTemplatesViewModel = viewModel(
+        factory = ShiftTemplatesViewModelFactory(shiftRepository = shiftRepository)
     )
 
     val childrenViewModel: ChildrenViewModel = viewModel(
@@ -61,6 +81,8 @@ fun App() {
         childrenViewModel = childrenViewModel,
         tagsViewModel = tagsViewModel,
         settingsViewModel = settingsViewModel,
+        shiftViewModel = shiftViewModel,
+        shiftTemplatesViewModel = shiftTemplatesViewModel,
         onExit = if (activity != null) ({ activity.finish() }) else null,
         showSectionBack = false
     )

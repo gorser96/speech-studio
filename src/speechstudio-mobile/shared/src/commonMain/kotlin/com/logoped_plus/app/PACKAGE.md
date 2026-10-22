@@ -4,7 +4,7 @@
 
 | Файл | Назначение |
 |---|---|
-| [AppContainer.kt](AppContainer.kt) | Принимает готовую `ChildrenDatabase`, `SettingsRepository`, `VideoLibrary`, `CoroutineScope` и `Clock`; создаёт `RoomChildRepository`, `RoomLessonRepository`, `RoomTagRepository`, `GenerateChildLessonsUseCase` и `FindLessonVideosUseCase`; `close()` отменяет scope и закрывает БД |
+| [AppContainer.kt](AppContainer.kt) | Принимает готовую `ChildrenDatabase`, `SettingsRepository`, `VideoLibrary`, `CoroutineScope` и `Clock`; создаёт `RoomChildRepository`, `RoomLessonRepository`, `RoomTagRepository`, `RoomShiftRepository`, `GenerateChildLessonsUseCase`, `FindLessonVideosUseCase`, `FindShiftVideosUseCase` и `GenerateShiftShiftsUseCase`; `close()` отменяет scope и закрывает БД |
 
 Платформенные фабрики передают свои зависимости: Android — [createAppContainer](../../../../../../../app/src/main/java/com/logoped_plus/AppContainer.kt), iOS — `createIosAppContainer` в [com.logoped_plus.ios](../../../../../iosMain/kotlin/com/logoped_plus/ios/PACKAGE.md). Потребители — Android- и iOS-оболочки, которые создают ViewModels существующими фабриками. Ручная DI сохраняется, Hilt не добавлен.
 

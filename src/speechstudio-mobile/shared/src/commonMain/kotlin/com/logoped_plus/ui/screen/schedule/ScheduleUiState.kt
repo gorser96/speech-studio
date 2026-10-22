@@ -1,14 +1,17 @@
 package com.logoped_plus.ui.screen.schedule
 
 import com.logoped_plus.domain.model.Child
+import com.logoped_plus.domain.model.WorkShift
 import com.logoped_plus.domain.repository.ChildLoadState
 import com.logoped_plus.domain.repository.LessonLoadState
+import com.logoped_plus.domain.repository.ShiftLoadState
 import com.logoped_plus.ui.screen.schedule.model.LessonUiModel
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 
 data class ScheduleUiState(
     val lessonLoadState: LessonLoadState = LessonLoadState.Loading(),
+    val shiftLoadState: ShiftLoadState = ShiftLoadState.Loading(),
     val editor: LessonEditorState? = null,
     val detailsDraft: LessonEditorState? = null,
     val awaitingSnapshot: Boolean = false,
@@ -22,6 +25,9 @@ data class ScheduleUiState(
     val displayedMonth: LocalDate,
     val displayedWeekStart: LocalDate,
     val lessons: List<LessonUiModel> = emptyList(),
+    val shifts: List<WorkShift> = emptyList(),
+    val openShiftId: String? = null,
+    val shiftMessage: String? = null,
     val children: List<Child> = emptyList(),
     val weekendHidden: Boolean = false,
     val gridStartHour: Int = 0,

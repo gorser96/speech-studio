@@ -1,5 +1,6 @@
 package com.logoped_plus.ui.screen.schedule.model
 
+import com.logoped_plus.domain.model.LessonType
 import com.logoped_plus.domain.model.Tag
 import kotlinx.datetime.LocalDateTime
 
@@ -16,5 +17,7 @@ data class LessonUiModel(
     val comment: String,
     val participantCount: Int = 0,
     val videoUris: List<String> = emptyList(),
-    val participants: List<LessonParticipantUi> = emptyList()
+    val participants: List<LessonParticipantUi> = emptyList(),
+    val type: LessonType = LessonType.INDIVIDUAL,
+    val shiftId: String? = null
 )

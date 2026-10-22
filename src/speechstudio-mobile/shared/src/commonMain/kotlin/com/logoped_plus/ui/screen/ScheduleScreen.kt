@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -37,14 +38,31 @@ import com.logoped_plus.ui.screen.schedule.ScheduleUiState
 import com.logoped_plus.ui.screen.schedule.ScheduleViewMode
 import com.logoped_plus.ui.screen.schedule.ScheduleViewModel
 import com.logoped_plus.ui.screen.schedule.WeekScheduleView
+import com.logoped_plus.ui.screen.shift.ShiftScreen
+import com.logoped_plus.ui.screen.shift.ShiftViewModel
 import com.logoped_plus.domain.repository.*
 import com.logoped_plus.ui.screen.schedule.*
 
 @Composable
 fun ScheduleScreen(
-    viewModel: ScheduleViewModel
+    viewModel: ScheduleViewModel,
+    shiftViewModel: ShiftViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    val openShiftId = uiState.openShiftId
+    if (openShiftId != null) {
+        val shiftState by shiftViewModel.uiState.collectAsState()
+        PlatformBackHandler(enabled = true) {
+            if (!shiftState.working) viewModel.onAction(ScheduleAction.CloseShift)
+        }
+        ShiftScreen(
+            shiftId = openShiftId,
+            viewModel = shiftViewModel,
+            onClose = { viewModel.onAction(ScheduleAction.CloseShift) }
+        )
+        return
+    }
 
     ScheduleContent(
         uiState = uiState,
@@ -60,6 +78,7 @@ internal fun ScheduleContent(
     Column(Modifier.fillMaxSize()) {
         ChildrenLoadStatus(uiState.childLoadState, { onAction(ScheduleAction.RetryChildren) })
         LessonLoadStatus(uiState, onAction)
+        ShiftLoadStatus(uiState, onAction)
         ScheduleBody(uiState, onAction)
     }
 }
@@ -71,6 +90,7 @@ private fun ScheduleBody(
 ) {
     val scrollState = rememberScrollState()
     val selectedLesson = uiState.selectedLesson
+    val shiftContainers = buildShiftContainers(uiState.shifts, uiState.lessons)
     val childrenReady = uiState.childLoadState is ChildLoadState.Ready
     val editor = uiState.editor
     PlatformBackHandler(enabled = editor != null) {
@@ -178,6 +198,10 @@ private fun ScheduleBody(
                             onAction(
                                 ScheduleAction.SelectLesson(lesson.id)
                             )
+                        },
+                        shifts = shiftContainers,
+                        onShiftClick = { shiftId ->
+                            onAction(ScheduleAction.OpenShift(shiftId))
                         }
                     )
                 }
@@ -206,6 +230,10 @@ private fun ScheduleBody(
                         },
                         onOpenDay = { date ->
                             onAction(ScheduleAction.OpenDay(date))
+                        },
+                        shifts = shiftContainers,
+                        onShiftClick = { shiftId ->
+                            onAction(ScheduleAction.OpenShift(shiftId))
                         }
                     )
                 }
@@ -230,6 +258,10 @@ private fun ScheduleBody(
                             onAction(
                                 ScheduleAction.SelectLesson(uiModel.id)
                             )
+                        },
+                        shifts = shiftContainers,
+                        onShiftClick = { shiftId ->
+                            onAction(ScheduleAction.OpenShift(shiftId))
                         }
                     )
                 }
@@ -276,6 +308,19 @@ private fun ScheduleViewModeSelector(
             Text("День")
         }
     }
+}
+
+@Composable
+private fun ShiftLoadStatus(state: ScheduleUiState, onAction: (ScheduleAction) -> Unit) {
+    when (state.shiftLoadState) {
+        is ShiftLoadState.Loading -> Text("Загрузка смен...")
+        is ShiftLoadState.Error -> {
+            Text("Не удалось загрузить смены")
+            Button(enabled = !state.saving, onClick = { onAction(ScheduleAction.RetryShifts) }) { Text("Повторить загрузку смен") }
+        }
+        is ShiftLoadState.Ready -> Unit
+    }
+    state.shiftMessage?.let { message -> Text(message, color = MaterialTheme.colorScheme.error) }
 }
 
 @Composable

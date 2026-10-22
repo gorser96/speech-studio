@@ -36,5 +36,10 @@ internal fun androidMigrations(): Array<Migration> = arrayOf(
         override fun migrate(db: SupportSQLiteDatabase) {
             migrateToV4 { db.execSQL(it) }
         }
+    },
+    object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            migrateToV5 { db.execSQL(it) }
+        }
     }
 )

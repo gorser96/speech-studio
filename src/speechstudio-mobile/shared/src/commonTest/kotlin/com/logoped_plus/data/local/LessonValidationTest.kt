@@ -2,6 +2,7 @@ package com.logoped_plus.data.local
 
 import com.logoped_plus.domain.model.Lesson
 import com.logoped_plus.domain.model.LessonParticipant
+import com.logoped_plus.domain.model.LessonType
 import com.logoped_plus.domain.repository.LessonWriteResult
 import kotlinx.datetime.LocalDateTime
 import kotlin.test.Test
@@ -29,5 +30,23 @@ class LessonValidationTest {
         assertEquals(LessonWriteResult.Reason.InvalidData, invalidReason(blank))
         val duplicated = Lesson("id", listOf(LessonParticipant("a"), LessonParticipant("a")), at, 40)
         assertEquals(LessonWriteResult.Reason.InvalidData, invalidReason(duplicated))
+    }
+
+    @Test
+    fun groupedLessonCannotBelongToShift() {
+        val grouped = Lesson(
+            "id", listOf(LessonParticipant("a"), LessonParticipant("b")), at, 40,
+            type = LessonType.GROUP, shiftId = "s1"
+        )
+        assertEquals(LessonWriteResult.Reason.InvalidData, invalidReason(grouped))
+    }
+
+    @Test
+    fun individualLessonWithShiftIsValid() {
+        val individual = Lesson(
+            "id", listOf(LessonParticipant("a")), at, 40,
+            type = LessonType.INDIVIDUAL, shiftId = "s1"
+        )
+        assertNull(invalidReason(individual))
     }
 }

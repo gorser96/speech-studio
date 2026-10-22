@@ -5,7 +5,7 @@
 | Файл | Назначение |
 |---|---|
 | [LessonDateTimeFields.kt](LessonDateTimeFields.kt) | Дата рядом с общим [TimeField](../../../components/PACKAGE.md) (raw «ЧЧ:ММ») и enabled |
-| [LessonDateField.kt](LessonDateField.kt) | DatePickerDialog; календарная дата через UTC, блокировка открытого диалога |
+| [LessonDateField.kt](LessonDateField.kt) | DatePickerDialog; календарная дата через UTC, блокировка открытого диалога, настраиваемая подпись поля |
 | [ChildMultiSelectField.kt](ChildMultiSelectField.kt) | Множественный выбор ID с поиском в нижнем листе (`imePadding` у контента); enabled и guards открытого sheet |
 | [VideoAttachmentsEditor.kt](VideoAttachmentsEditor.kt) | Общий редактор вложений через `platform.video`: добавление через `VideoPicker` (Android — OpenMultipleDocuments с постоянным grant), уникальные URI в порядке выбора, подтверждение открепления, кнопка автоподкрепления с запросом доступа к видео (Android — `READ_MEDIA_VIDEO`), enabled/sessionId, scanInProgress/scanMessage; кнопка поиска показывается только при `VideoCapabilities.deviceScan` |
 | [VideoAttachmentLink.kt](VideoAttachmentLink.kt) | Имя через `VideoAccess.displayName` и открытие через `VideoAccess.open` (Android — проверка дескриптора, закрытие перед ACTION_VIEW, ошибки файла/доступа/URI/проигрывателя; iOS — заглушка до этапа 4.3) |

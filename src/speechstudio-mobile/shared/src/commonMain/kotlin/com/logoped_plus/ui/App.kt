@@ -1,5 +1,6 @@
 package com.logoped_plus.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -7,8 +8,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import com.logoped_plus.platform.PlatformBackHandler
+import com.logoped_plus.domain.model.LessonType
 import com.logoped_plus.ui.screen.ChildrenScreen
 import com.logoped_plus.ui.screen.ScheduleScreen
 import com.logoped_plus.ui.screen.SettingsScreen
@@ -39,6 +44,9 @@ import com.logoped_plus.ui.screen.children.ChildrenViewModel
 import com.logoped_plus.ui.screen.schedule.LessonEditorMode
 import com.logoped_plus.ui.screen.schedule.ScheduleAction
 import com.logoped_plus.ui.screen.schedule.ScheduleViewModel
+import com.logoped_plus.ui.screen.shift.ShiftViewModel
+import com.logoped_plus.ui.screen.shift.templates.ShiftTemplatesScreen
+import com.logoped_plus.ui.screen.shift.templates.ShiftTemplatesViewModel
 import com.logoped_plus.ui.screen.tags.TagsViewModel
 import kotlinx.coroutines.launch
 import speechstudio.shared.generated.resources.Res
@@ -64,6 +72,8 @@ fun App(
     childrenViewModel: ChildrenViewModel,
     tagsViewModel: TagsViewModel,
     settingsViewModel: SettingsViewModel,
+    shiftViewModel: ShiftViewModel,
+    shiftTemplatesViewModel: ShiftTemplatesViewModel,
     logo: Painter? = null,
     onExit: (() -> Unit)? = null,
     showSectionBack: Boolean = false
@@ -71,12 +81,16 @@ fun App(
     val scheduleState by scheduleViewModel.uiState.collectAsState()
     val childrenState by childrenViewModel.uiState.collectAsState()
     val tagsState by tagsViewModel.uiState.collectAsState()
+    val shiftState by shiftViewModel.uiState.collectAsState()
+    val shiftTemplatesState by shiftTemplatesViewModel.uiState.collectAsState()
     val appLogo = logo ?: painterResource(Res.drawable.icon1024)
-    val appBusy = scheduleState.saving || childrenState.busy || tagsState.busy
+    val appBusy = scheduleState.saving || childrenState.busy || tagsState.busy ||
+        shiftState.working || shiftTemplatesState.working
     var currentScreen by rememberSaveable(stateSaver = AppScreenSaver) { mutableStateOf(AppScreen.Schedule) }
     var showExitConfirmation by rememberSaveable {
         mutableStateOf(false)
     }
+    var addMenuOpen by rememberSaveable { mutableStateOf(false) }
 
     PlatformBackHandler(
         enabled = currentScreen != AppScreen.Schedule
@@ -95,10 +109,12 @@ fun App(
     val cardOpen = currentScreen == AppScreen.Children && currentCardId != null
     val lessonEditor = scheduleState.editor
     val lessonOpen = currentScreen == AppScreen.Schedule && lessonEditor != null
+    val shiftOpen = currentScreen == AppScreen.Schedule && scheduleState.openShiftId != null
     val sectionBackVisible = showSectionBack && currentScreen != AppScreen.Schedule
     val screenTitle = when (currentScreen) {
-        AppScreen.Schedule -> "Расписание"
+        AppScreen.Schedule -> if (shiftOpen) "Смена" else "Расписание"
         AppScreen.Children -> "Дети"
+        AppScreen.ShiftTemplates -> "Шаблоны смен"
         AppScreen.Tags -> "Тэги"
         AppScreen.Settings -> "Настройки"
     }
@@ -153,6 +169,17 @@ fun App(
                                 )
                             }
 
+                            shiftOpen -> IconButton(enabled = !appBusy,
+                                onClick = {
+                                    if (!appBusy) scheduleViewModel.onAction(ScheduleAction.CloseShift)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "К расписанию"
+                                )
+                            }
+
                             sectionBackVisible -> IconButton(enabled = !appBusy,
                                 onClick = {
                                     if (!appBusy) currentScreen = AppScreen.Schedule
@@ -182,16 +209,55 @@ fun App(
                         Text(screenTitle)
                     },
                     actions = {
-                        if (currentScreen == AppScreen.Schedule && !lessonOpen) {
+                        if (shiftOpen) {
                             IconButton(
-                                enabled = !appBusy,
-                                onClick = {
-                                    if (!appBusy && scheduleViewModel.uiState.value.editor == null) {
-                                        scheduleViewModel.onAction(ScheduleAction.StartCreatingLesson())
-                                    }
-                                }
+                                enabled = !shiftState.working && shiftState.canDelete,
+                                onClick = { if (!shiftState.working) shiftViewModel.requestDeleteShift() }
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = "Добавление занятия")
+                                Icon(Icons.Default.Delete, contentDescription = "Удалить смену")
+                            }
+                        }
+                        if (currentScreen == AppScreen.Schedule && !lessonOpen && !shiftOpen) {
+                            Box {
+                                IconButton(
+                                    enabled = !appBusy,
+                                    onClick = { if (!appBusy) addMenuOpen = true }
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = "Добавление занятия")
+                                }
+                                DropdownMenu(
+                                    expanded = addMenuOpen,
+                                    onDismissRequest = { addMenuOpen = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Индивидуальное занятие") },
+                                        enabled = !appBusy,
+                                        onClick = {
+                                            addMenuOpen = false
+                                            if (!appBusy) scheduleViewModel.onAction(
+                                                ScheduleAction.StartCreatingLesson(type = LessonType.INDIVIDUAL)
+                                            )
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Групповое занятие") },
+                                        enabled = !appBusy,
+                                        onClick = {
+                                            addMenuOpen = false
+                                            if (!appBusy) scheduleViewModel.onAction(
+                                                ScheduleAction.StartCreatingLesson(type = LessonType.GROUP)
+                                            )
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Смена") },
+                                        enabled = !appBusy,
+                                        onClick = {
+                                            addMenuOpen = false
+                                            if (!appBusy) scheduleViewModel.onAction(ScheduleAction.StartCreatingShift())
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -207,11 +273,16 @@ fun App(
             ) {
                 when (currentScreen) {
                     AppScreen.Schedule -> ScheduleScreen(
-                        viewModel = scheduleViewModel
+                        viewModel = scheduleViewModel,
+                        shiftViewModel = shiftViewModel
                     )
 
                     AppScreen.Children -> ChildrenScreen(
                         viewModel = childrenViewModel
+                    )
+
+                    AppScreen.ShiftTemplates -> ShiftTemplatesScreen(
+                        viewModel = shiftTemplatesViewModel
                     )
 
                     AppScreen.Tags -> TagsScreen(

@@ -99,6 +99,7 @@ fun AppDrawer(
 
         DrawerItem("Расписание", AppScreen.Schedule, currentScreen, enabled, onScreenSelected)
         DrawerItem("Дети", AppScreen.Children, currentScreen, enabled, onScreenSelected)
+        DrawerItem("Шаблоны смен", AppScreen.ShiftTemplates, currentScreen, enabled, onScreenSelected)
         DrawerItem("Тэги", AppScreen.Tags, currentScreen, enabled, onScreenSelected)
         DrawerItem("Настройки", AppScreen.Settings, currentScreen, enabled, onScreenSelected)
     }

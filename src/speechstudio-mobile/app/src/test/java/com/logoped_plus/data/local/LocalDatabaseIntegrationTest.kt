@@ -7,6 +7,7 @@ import com.logoped_plus.domain.model.ChildSchedule
 import com.logoped_plus.domain.model.GenerationCounts
 import com.logoped_plus.domain.model.Lesson
 import com.logoped_plus.domain.model.LessonParticipant
+import com.logoped_plus.domain.model.LessonType
 import com.logoped_plus.domain.model.Tag
 import com.logoped_plus.domain.model.TagColorKey
 import com.logoped_plus.domain.model.WeeklyLessonSlot
@@ -72,7 +73,7 @@ class LocalDatabaseIntegrationTest {
     private suspend fun lessons(db: ChildrenDatabase) = db.lessonDao().observeLessons().first()
 
     @Test
-    fun migration1To4PreservesChildren() = runBlocking {
+    fun migrationToLatestPreservesChildren() = runBlocking {
         val name = "itest-migration-1-4.db"
         context.deleteDatabase(name)
         val raw = SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null)
@@ -86,7 +87,7 @@ class LocalDatabaseIntegrationTest {
         }
 
         val db = openExisting(name)
-        assertEquals(4, db.openHelper.readableDatabase.version)
+        assertEquals(5, db.openHelper.readableDatabase.version)
         assertEquals(listOf("c1", "c2"), children(db).map { it.id })
         assertEquals(listOf("Анна", "Борис"), children(db).map { it.name })
         assertTrue(lessons(db).isEmpty())
@@ -100,7 +101,7 @@ class LocalDatabaseIntegrationTest {
         val raw = SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null)
         try {
             V1_DDL.forEach { raw.execSQL(it) }
-            raw.execSQL("PRAGMA user_version = 5")
+            raw.execSQL("PRAGMA user_version = 6")
             raw.execSQL("INSERT INTO children (id, name) VALUES ('c1', 'Анна')")
         } finally {
             raw.close()
@@ -130,7 +131,7 @@ class LocalDatabaseIntegrationTest {
     }
 
     @Test
-    fun reopeningV4DatabaseKeepsData() = runBlocking {
+    fun reopeningDatabaseKeepsData() = runBlocking {
         val name = "itest-reopen.db"
         val first = open(name)
         assertTrue(first.childDao().addOnce("c1", "Анна"))
@@ -138,12 +139,12 @@ class LocalDatabaseIntegrationTest {
         databases.remove(first)
 
         val second = openExisting(name)
-        assertEquals(4, second.openHelper.readableDatabase.version)
+        assertEquals(5, second.openHelper.readableDatabase.version)
         assertEquals(listOf("c1"), children(second).map { it.id })
     }
 
     @Test
-    fun migration3To4PreservesData() = runBlocking {
+    fun migration3ToLatestPreservesData() = runBlocking {
         val name = "itest-migration.db"
         context.deleteDatabase(name)
         val raw = SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null)
@@ -165,7 +166,7 @@ class LocalDatabaseIntegrationTest {
         }
 
         val db = openExisting(name)
-        assertEquals(4, db.openHelper.readableDatabase.version)
+        assertEquals(5, db.openHelper.readableDatabase.version)
         val rows = children(db)
         assertEquals(listOf("c1", "c2"), rows.map { it.id })
         assertEquals(listOf("Анна", "Борис"), rows.map { it.name })
@@ -181,6 +182,80 @@ class LocalDatabaseIntegrationTest {
         assertTrue(migrated.tagIds.isEmpty())
         assertTrue(migrated.schedule.slots.isEmpty())
         assertNull(migrated.schedule.endDate)
+    }
+
+    @Test
+    fun migration4To5PreservesDataAndFillsType() = runBlocking {
+        val name = "itest-migration-4-5.db"
+        context.deleteDatabase(name)
+        val raw = SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null)
+        try {
+            V4_DDL.forEach { raw.execSQL(it) }
+            raw.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY, identity_hash TEXT)")
+            raw.execSQL("INSERT INTO room_master_table (id, identity_hash) VALUES (42, '7441455d846ab97cdbe9ae33d072969c')")
+            raw.execSQL("PRAGMA user_version = 4")
+            val epochDay = LocalDate(2026, 9, 1).toEpochDays()
+            val nano = LocalTime(9, 0).toNanosecondOfDay()
+            raw.execSQL("INSERT INTO children (id, name) VALUES ('c1', 'Анна')")
+            raw.execSQL("INSERT INTO children (id, name) VALUES ('c2', 'Борис')")
+            raw.execSQL("INSERT INTO tags (id, name, nameKey, colorKey) VALUES ('t1', 'Группа А', 'группа а', 'RED')")
+            raw.execSQL("INSERT INTO child_tags (childId, tagId) VALUES ('c1', 't1')")
+            raw.execSQL("INSERT INTO child_schedule (childId, endEpochDay) VALUES ('c1', ${LocalDate(2026, 10, 31).toEpochDays()})")
+            raw.execSQL("INSERT INTO child_schedule_slots (childId, id, dayOfWeek, startNanoOfDay, durationMinutes, ordinal) VALUES ('c1', 's1', 4, ${LocalTime(16, 0).toNanosecondOfDay()}, 40, 0)")
+            raw.execSQL("INSERT INTO lessons (id, scheduledEpochDay, scheduledNanoOfDay, durationMinutes, comment) VALUES ('solo', $epochDay, $nano, 40, 'один')")
+            raw.execSQL("INSERT INTO lessons (id, scheduledEpochDay, scheduledNanoOfDay, durationMinutes, comment) VALUES ('pair', $epochDay, $nano, 40, 'двое')")
+            raw.execSQL("INSERT INTO lessons (id, scheduledEpochDay, scheduledNanoOfDay, durationMinutes, comment) VALUES ('empty', $epochDay, $nano, 40, '')")
+            raw.execSQL("INSERT INTO lesson_participants (lessonId, childId, childName, ordinal) VALUES ('solo', 'c1', NULL, 0)")
+            raw.execSQL("INSERT INTO lesson_participants (lessonId, childId, childName, ordinal) VALUES ('pair', 'c1', NULL, 0)")
+            raw.execSQL("INSERT INTO lesson_participants (lessonId, childId, childName, ordinal) VALUES ('pair', 'c2', NULL, 1)")
+            raw.execSQL("INSERT INTO lesson_videos (lessonId, uri, ordinal) VALUES ('solo', 'content://v1', 0)")
+        } finally {
+            raw.close()
+        }
+
+        val db = openExisting(name)
+        assertEquals(5, db.openHelper.readableDatabase.version)
+        assertEquals(listOf("c1", "c2"), children(db).map { it.id })
+        assertEquals(listOf("t1"), tags(db).map { it.id })
+        val solo = db.lessonDao().find("solo")!!
+        val pair = db.lessonDao().find("pair")!!
+        val empty = db.lessonDao().find("empty")!!
+        assertEquals(LessonType.INDIVIDUAL.name, solo.lesson.type)
+        assertEquals(LessonType.GROUP.name, pair.lesson.type)
+        assertEquals(LessonType.INDIVIDUAL.name, empty.lesson.type)
+        assertNull(solo.lesson.shiftId)
+        assertEquals("один", solo.lesson.comment)
+        assertEquals(listOf("c1"), solo.participants.map { it.childId })
+        assertEquals(listOf("c1", "c2"), pair.participants.sortedBy { it.ordinal }.map { it.childId })
+        assertEquals("content://v1", solo.videos.single().uri)
+        assertEquals(3, lessons(db).size)
+        assertTrue(db.shiftDao().observeShifts().first().isEmpty())
+        assertTrue(db.shiftDao().observeTemplates().first().isEmpty())
+        val migrated = card(db, "c1")!!
+        assertEquals(listOf("t1"), migrated.tagIds)
+        assertEquals(listOf("s1"), migrated.schedule.slots.map { it.id })
+        assertEquals(LocalDate(2026, 10, 31).toEpochDays(), migrated.schedule.endDate!!.toEpochDays())
+    }
+
+    @Test
+    fun lessonTypeIsStoredAndNotDerivedFromParticipants() = runBlocking {
+        val db = open("itest-lesson-type.db")
+        assertTrue(db.childDao().addOnce("c1", "Анна"))
+        assertTrue(db.childDao().addOnce("c2", "Борис"))
+        check(db.lessonDao().addOnce(
+            Lesson(
+                "group", listOf(LessonParticipant("c1"), LessonParticipant("c2")),
+                LocalDateTime(2026, 9, 1, 9, 0), 40, type = LessonType.GROUP
+            )
+        ) is LessonWriteResult.Success)
+        assertEquals(LessonType.GROUP, db.lessonDao().find("group")!!.toDomain().type)
+
+        val single = db.lessonDao().find("group")!!.toDomain().copy(participants = listOf(LessonParticipant("c1")))
+        check(db.lessonDao().updateExisting(single) is LessonWriteResult.Success)
+
+        val stored = db.lessonDao().find("group")!!.toDomain()
+        assertEquals(LessonType.GROUP, stored.type)
+        assertEquals(listOf("c1"), stored.participants.map { it.childId })
     }
 
     @Test
@@ -392,6 +467,16 @@ class LocalDatabaseIntegrationTest {
             "CREATE INDEX IF NOT EXISTS `index_lesson_participants_childId` ON `lesson_participants` (`childId`)",
             "CREATE TABLE IF NOT EXISTS `lesson_videos` (`lessonId` TEXT NOT NULL, `uri` TEXT NOT NULL, `ordinal` INTEGER NOT NULL, PRIMARY KEY(`lessonId`, `uri`), FOREIGN KEY(`lessonId`) REFERENCES `lessons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
             "CREATE UNIQUE INDEX IF NOT EXISTS `index_lesson_videos_lessonId_ordinal` ON `lesson_videos` (`lessonId`, `ordinal`)"
+        )
+
+        val V4_DDL = V3_DDL + listOf(
+            "CREATE TABLE IF NOT EXISTS `tags` (`position` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id` TEXT NOT NULL, `name` TEXT NOT NULL, `nameKey` TEXT NOT NULL, `colorKey` TEXT NOT NULL)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_tags_id` ON `tags` (`id`)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_tags_nameKey` ON `tags` (`nameKey`)",
+            "CREATE TABLE IF NOT EXISTS `child_tags` (`childId` TEXT NOT NULL, `tagId` TEXT NOT NULL, PRIMARY KEY(`childId`, `tagId`), FOREIGN KEY(`childId`) REFERENCES `children`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`tagId`) REFERENCES `tags`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            "CREATE TABLE IF NOT EXISTS `child_schedule` (`childId` TEXT NOT NULL, `endEpochDay` INTEGER NOT NULL, PRIMARY KEY(`childId`), FOREIGN KEY(`childId`) REFERENCES `children`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            "CREATE TABLE IF NOT EXISTS `child_schedule_slots` (`childId` TEXT NOT NULL, `id` TEXT NOT NULL, `dayOfWeek` INTEGER NOT NULL, `startNanoOfDay` INTEGER NOT NULL, `durationMinutes` INTEGER NOT NULL, `ordinal` INTEGER NOT NULL, PRIMARY KEY(`childId`, `id`), FOREIGN KEY(`childId`) REFERENCES `children`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`childId`) REFERENCES `child_schedule`(`childId`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_child_schedule_slots_childId_ordinal` ON `child_schedule_slots` (`childId`, `ordinal`)"
         )
     }
 }
