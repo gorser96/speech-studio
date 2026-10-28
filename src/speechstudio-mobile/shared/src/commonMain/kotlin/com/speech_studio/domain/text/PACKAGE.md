@@ -4,7 +4,7 @@
 
 | Файл | Назначение |
 |---|---|
-| [RussianText.kt](RussianText.kt) | Названия месяцев (именительный/родительный/краткий), дни недели, `formatNumericDate`, `formatLongDate`, `formatLongDatePadded`, `formatDayHeader`, `formatWeekRange`, `formatHour`, `formatTime`, `formatDateTime`; используется вместо `DateTimeFormatter`/`Locale` |
+| [RussianText.kt](RussianText.kt) | Названия месяцев (именительный/родительный/краткий), дни недели, `formatNumericDate`, `formatLongDate`, `formatDayMonth`, `formatLongDatePadded`, `formatDayHeader`, `formatWeekRange`, `formatHour`, `formatTime`, `formatDateTime`; используется вместо `DateTimeFormatter`/`Locale` |
 | [RussianNameSort.kt](RussianNameSort.kt) | Ключ сравнения имён: нижний регистр, `ё` сравнивается как `е`, порядок по code points; `sortedBy` сохраняет исходный порядок для равных ключей (тёзки) |
 
 Потребители — [экран детей](../../ui/screen/children/PACKAGE.md), [расписание](../../ui/screen/schedule/PACKAGE.md) и [тэги](../../ui/screen/tags/PACKAGE.md). Форматирование не зависит от языка устройства: при смене системной локали подписи не меняются.

@@ -1,13 +1,30 @@
 package com.speech_studio.ui.screen.schedule
 
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -20,10 +37,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.atTime
 
+private val DayHourColumnWidth = 44.dp
+
 @Composable
 fun DayScheduleView(
     date: LocalDate,
     lessons: List<LessonUiModel>,
+    today: LocalDate,
     onPreviousDay: () -> Unit,
     onNextDay: () -> Unit,
     onLessonClick: (LessonUiModel) -> Unit,
@@ -36,6 +56,8 @@ fun DayScheduleView(
 ) {
     val gridRange = effectiveGridRange(gridStartHour, gridEndHour)
     val rows = gridRange.last - gridRange.first + 1
+    val labels = hourGridLabels(gridStartHour, gridEndHour)
+    val firstVisibleHour = initialGridScrollHour(gridStartHour, gridEndHour)
     val timeline = remember(date, lessons, gridRange) {
         buildDayTimeline(date, lessons, gridRange.first * 60, (gridRange.last + 1) * 60)
     }
@@ -46,21 +68,30 @@ fun DayScheduleView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                "‹", style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier
-                    .clickable(onClick = onPreviousDay)
-                    .padding(horizontal = 16.dp)
-            )
-            Text(RussianText.formatDayHeader(date), style = MaterialTheme.typography.titleMedium)
-            Text(
-                "›", style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier
-                    .clickable(onClick = onNextDay)
-                    .padding(horizontal = 16.dp)
-            )
+            IconButton(onClick = onPreviousDay) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Предыдущий день"
+                )
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(RussianText.formatDayHeader(date), style = MaterialTheme.typography.titleMedium)
+                if (date == today) {
+                    Text(
+                        text = "Сегодня",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            IconButton(onClick = onNextDay) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Следующий день"
+                )
+            }
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(4.dp))
         BoxWithConstraints(
             Modifier
                 .fillMaxWidth()
@@ -68,35 +99,16 @@ fun DayScheduleView(
         ) {
             val hourHeight = (maxHeight / 5).coerceAtLeast(64.dp)
             val density = LocalDensity.current
-            val minHourFromLesson =
-                lessons.minByOrNull { it.scheduledAt.hour }?.scheduledAt?.hour ?: 8
-            val initialHours =
-                if (gridRange.first < minHourFromLesson) minHourFromLesson - gridRange.first else 0
+            val initialHours = firstVisibleHour - gridRange.first
             val initialScroll = with(density) { (hourHeight * initialHours).roundToPx() }
             val hoursState = rememberScrollState(initial = initialScroll)
             Row(
                 Modifier
                     .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface)
                     .verticalScroll(hoursState)
             ) {
-                Column(Modifier.width(44.dp)) {
-                    gridRange.forEach { hour ->
-                        Column(
-                            Modifier.height(hourHeight),
-                            verticalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                RussianText.formatHour(hour),
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                            Text(
-                                RussianText.formatHour(hour + 1),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
+                HourLabelsColumn(labels, hourHeight, Modifier.width(DayHourColumnWidth))
                 BoxWithConstraints(
                     Modifier
                         .weight(1f)
@@ -117,7 +129,6 @@ fun DayScheduleView(
                                 Modifier
                                     .fillMaxWidth()
                                     .height(hourHeight)
-                                    .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
                                     .then(emptyHourModifier)
                             )
                         }
@@ -128,6 +139,9 @@ fun DayScheduleView(
                         ShiftContainerStrip(
                             container = container,
                             onClick = { onShiftClick(container.shiftId) },
+                            onEmptyHourDoubleClick = { dateTime ->
+                                if (timeline.isHourEmpty(dateTime.hour)) onEmptyHourDoubleClick(dateTime)
+                            },
                             modifier = Modifier
                                 .offset(x = 0.dp, y = top)
                                 .width(dayWidth)
@@ -136,6 +150,7 @@ fun DayScheduleView(
                                 .clipToBounds()
                         )
                     }
+                    HourGridLines(rows, hourHeight)
                     timeline.spans.forEach { span ->
                         val lanes = span.laneCount ?: 1
                         val laneWidth = dayWidth / lanes

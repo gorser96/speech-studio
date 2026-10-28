@@ -37,3 +37,15 @@ fun buildShiftContainers(
 /** Контейнеры смен на конкретную дату, отсортированные по началу окна. */
 fun List<ShiftContainerUi>.onDate(date: LocalDate): List<ShiftContainerUi> =
     filter { it.date == date }.sortedBy { it.startMinute }
+
+/**
+ * Час по доле высоты полосы смены, если он целиком лежит в окне смены.
+ * Нажатие у края окна возвращает `null`: занятие за пределами смены не создаётся.
+ */
+fun ShiftContainerUi.hourAtVerticalFraction(fraction: Float): Int? {
+    if (fraction < 0f || fraction > 1f) return null
+    if (endMinute <= startMinute) return null
+    val minutes = startMinute + fraction * (endMinute - startMinute)
+    val hour = (minutes / 60f).toInt()
+    return hour.takeIf { it * 60 >= startMinute && (it + 1) * 60 <= endMinute }
+}

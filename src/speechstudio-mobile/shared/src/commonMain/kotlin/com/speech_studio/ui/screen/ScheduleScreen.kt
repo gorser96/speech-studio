@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -211,6 +210,7 @@ private fun ScheduleBody(
                         modifier = Modifier.height(weekHeight),
                         weekStart = uiState.displayedWeekStart,
                         lessons = uiState.lessons,
+                        today = uiState.today,
                         weekendHidden = uiState.weekendHidden,
                         gridStartHour = uiState.gridStartHour,
                         gridEndHour = uiState.gridEndHour,
@@ -243,6 +243,7 @@ private fun ScheduleBody(
                         modifier = Modifier.height(weekHeight),
                         date = uiState.selectedDate,
                         lessons = uiState.lessons,
+                        today = uiState.today,
                         gridStartHour = uiState.gridStartHour,
                         gridEndHour = uiState.gridEndHour,
                         onPreviousDay = {
@@ -272,6 +273,15 @@ private fun ScheduleBody(
 private fun ScheduleViewModeSelector(
     selectedMode: ScheduleViewMode, onModeSelected: (ScheduleViewMode) -> Unit
 ) {
+    val segmentColors = SegmentedButtonDefaults.colors(
+        activeContainerColor = MaterialTheme.colorScheme.surface,
+        activeContentColor = MaterialTheme.colorScheme.onSurface,
+        activeBorderColor = MaterialTheme.colorScheme.outlineVariant,
+        inactiveContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+        inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        inactiveBorderColor = MaterialTheme.colorScheme.outlineVariant
+    )
+    val baseShape = MaterialTheme.shapes.small
     SingleChoiceSegmentedButtonRow(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -279,30 +289,33 @@ private fun ScheduleViewModeSelector(
             selected = selectedMode == ScheduleViewMode.MONTH, onClick = {
                 onModeSelected(ScheduleViewMode.MONTH)
             }, shape = SegmentedButtonDefaults.itemShape(
-                index = 0, count = 3, baseShape = RoundedCornerShape(8.dp)
-            )
+                index = 0, count = 3, baseShape = baseShape
+            ),
+            colors = segmentColors
         ) {
-            Text("Месяц")
+            Text("Месяц", style = MaterialTheme.typography.labelLarge)
         }
 
         SegmentedButton(
             selected = selectedMode == ScheduleViewMode.WEEK, onClick = {
                 onModeSelected(ScheduleViewMode.WEEK)
             }, shape = SegmentedButtonDefaults.itemShape(
-                index = 1, count = 3, baseShape = RoundedCornerShape(8.dp)
-            )
+                index = 1, count = 3, baseShape = baseShape
+            ),
+            colors = segmentColors
         ) {
-            Text("Неделя")
+            Text("Неделя", style = MaterialTheme.typography.labelLarge)
         }
 
         SegmentedButton(
             selected = selectedMode == ScheduleViewMode.DAY, onClick = {
                 onModeSelected(ScheduleViewMode.DAY)
             }, shape = SegmentedButtonDefaults.itemShape(
-                index = 2, count = 3, baseShape = RoundedCornerShape(8.dp)
-            )
+                index = 2, count = 3, baseShape = baseShape
+            ),
+            colors = segmentColors
         ) {
-            Text("День")
+            Text("День", style = MaterialTheme.typography.labelLarge)
         }
     }
 }

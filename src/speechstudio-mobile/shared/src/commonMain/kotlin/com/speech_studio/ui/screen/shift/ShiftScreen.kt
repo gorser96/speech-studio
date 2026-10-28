@@ -1,9 +1,12 @@
 package com.speech_studio.ui.screen.shift
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +25,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +48,10 @@ import androidx.compose.ui.unit.dp
 import com.speech_studio.domain.repository.ShiftLoadState
 import com.speech_studio.domain.text.RussianText
 import com.speech_studio.platform.video.rememberVideoEnvironment
+import com.speech_studio.ui.components.BentoCard
+import com.speech_studio.ui.components.CompactNumberField
 import com.speech_studio.ui.components.NumberField
+import com.speech_studio.ui.components.SectionLabel
 import com.speech_studio.ui.components.TimeField
 import com.speech_studio.ui.screen.schedule.component.LessonDateField
 import com.speech_studio.ui.screen.schedule.shiftWriteErrorText
@@ -98,53 +103,57 @@ fun ShiftScreen(
         }
 
         if (state.shift != null) {
-            state.date?.let { date ->
-                LessonDateField(
-                    date = date,
-                    onDateChange = viewModel::changeDate,
-                    enabled = state.canChangeDate,
-                    label = "Дата смены",
-                    modifier = Modifier.fillMaxWidth()
-                )
-                val originalDate = state.shift?.date
-                if (originalDate != null && date != originalDate) {
-                    Text(
-                        if (state.lessons.isEmpty()) "Смена переедет на выбранную дату после сохранения."
-                        else "Смена и её занятия переедут на выбранную дату после сохранения.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            SectionLabel("Параметры смены")
+            BentoCard(Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    state.date?.let { date ->
+                        LessonDateField(
+                            date = date,
+                            onDateChange = viewModel::changeDate,
+                            enabled = state.canChangeDate,
+                            label = "Дата смены",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        val originalDate = state.shift?.date
+                        if (originalDate != null && date != originalDate) {
+                            Text(
+                                if (state.lessons.isEmpty()) "Смена переедет на выбранную дату после сохранения."
+                                else "Смена и её занятия переедут на выбранную дату после сохранения.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TimeField(value = state.startTime, onValueChange = viewModel::changeStartTime,
+                            label = "Начало", enabled = !state.working, modifier = Modifier.weight(1f))
+                        TimeField(value = state.endTime, onValueChange = viewModel::changeEndTime,
+                            label = "Конец", enabled = !state.working, modifier = Modifier.weight(1f))
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val baseInvalid = state.baseDuration.toIntOrNull()?.let { it > 0 } != true
+                        NumberField(value = state.baseDuration, onValueChange = viewModel::changeBaseDuration,
+                            label = "Длительность, мин", enabled = !state.working, modifier = Modifier.weight(1f),
+                            isError = baseInvalid, supportingText = if (baseInvalid) "Больше 0" else null)
+                        val breakInvalid = state.breakMinutes.toIntOrNull()?.let { it >= 0 } != true
+                        NumberField(value = state.breakMinutes, onValueChange = viewModel::changeBreakMinutes,
+                            label = "Перерыв, мин", enabled = !state.working, modifier = Modifier.weight(1f),
+                            isError = breakInvalid, supportingText = if (breakInvalid) "0 или больше" else null)
+                    }
+
+                    if (!state.geometryValid) {
+                        Text("Проверьте окно, длительность слотов и перерыв.", color = MaterialTheme.colorScheme.error)
+                    } else {
+                        Text("Свободное время: ${state.freeMinutes} мин", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    if (state.overflows) {
+                        Text("Слоты выходят за окно смены. Увеличьте окно или сократите слоты.",
+                            color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TimeField(value = state.startTime, onValueChange = viewModel::changeStartTime,
-                    label = "Начало", enabled = !state.working, modifier = Modifier.weight(1f))
-                TimeField(value = state.endTime, onValueChange = viewModel::changeEndTime,
-                    label = "Конец", enabled = !state.working, modifier = Modifier.weight(1f))
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val baseInvalid = state.baseDuration.toIntOrNull()?.let { it > 0 } != true
-                NumberField(value = state.baseDuration, onValueChange = viewModel::changeBaseDuration,
-                    label = "Длительность, мин", enabled = !state.working, modifier = Modifier.weight(1f),
-                    isError = baseInvalid, supportingText = if (baseInvalid) "Больше 0" else null)
-                val breakInvalid = state.breakMinutes.toIntOrNull()?.let { it >= 0 } != true
-                NumberField(value = state.breakMinutes, onValueChange = viewModel::changeBreakMinutes,
-                    label = "Перерыв, мин", enabled = !state.working, modifier = Modifier.weight(1f),
-                    isError = breakInvalid, supportingText = if (breakInvalid) "0 или больше" else null)
-            }
 
-            if (!state.geometryValid) {
-                Text("Проверьте окно, длительность слотов и перерыв.", color = MaterialTheme.colorScheme.error)
-            } else {
-                Text("Свободное время: ${state.freeMinutes} мин", style = MaterialTheme.typography.bodyMedium)
-            }
-            if (state.overflows) {
-                Text("Слоты выходят за окно смены. Увеличьте окно или сократите слоты.",
-                    color = MaterialTheme.colorScheme.error)
-            }
-
-            HorizontalDivider()
-            Text("Дети", style = MaterialTheme.typography.titleMedium)
+            SectionLabel("Дети")
 
             val itemHeightPx = remember { mutableStateOf(0f) }
             val rowSpacingPx = with(LocalDensity.current) { SLOT_ROW_SPACING.toPx() }
@@ -177,26 +186,29 @@ fun ShiftScreen(
             }
 
             if (state.lessons.isNotEmpty()) {
-                HorizontalDivider()
-                Text("Занятия смены", style = MaterialTheme.typography.titleMedium)
-                state.lessons.sortedBy { it.scheduledAt }.forEach { lesson ->
-                    val child = lesson.participants.firstOrNull()
-                        ?.let { participant -> participant.removedName ?: state.children.find { it.id == participant.childId }?.name }
-                        .orEmpty()
-                    val linked = state.slots.any { slot -> slot.lessonId == lesson.id }
-                    Text(
-                        buildString {
-                            append(RussianText.formatTime(lesson.scheduledAt.time))
-                            append(" · ")
-                            append(child.ifBlank { "Участник" })
-                            if (!linked) append(" · без слота")
-                        },
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                SectionLabel("Занятия смены")
+                BentoCard(Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        state.lessons.sortedBy { it.scheduledAt }.forEach { lesson ->
+                            val child = lesson.participants.firstOrNull()
+                                ?.let { participant -> participant.removedName ?: state.children.find { it.id == participant.childId }?.name }
+                                .orEmpty()
+                            val linked = state.slots.any { slot -> slot.lessonId == lesson.id }
+                            Text(
+                                buildString {
+                                    append(RussianText.formatTime(lesson.scheduledAt.time))
+                                    append(" · ")
+                                    append(child.ifBlank { "Участник" })
+                                    if (!linked) append(" · без слота")
+                                },
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
                 }
             }
 
-            HorizontalDivider()
+            SectionLabel("Действия")
 
             Button(
                 enabled = state.canCreateLessons,
@@ -298,7 +310,10 @@ private fun ShiftSlotRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .onSizeChanged { onHeightChange(it.height) },
+            .onSizeChanged { onHeightChange(it.height) }
+            .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.large)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.large)
+            .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -339,8 +354,17 @@ private fun ShiftSlotRow(
         IconButton(onClick = onMoveDown, enabled = enabled && index < count - 1) {
             Icon(Icons.Default.ArrowDownward, contentDescription = "Ниже")
         }
-        Column(Modifier.weight(1f)) {
-            TextButton(onClick = onChangeChild, enabled = enabled) {
+        Column(
+            Modifier
+                .weight(1f)
+                .padding(start = 16.dp, end = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            TextButton(
+                onClick = onChangeChild,
+                enabled = enabled,
+                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 2.dp)
+            ) {
                 Text(slot.childName.ifBlank { "Выбрать ребёнка" })
             }
             Text(
@@ -358,13 +382,16 @@ private fun ShiftSlotRow(
                     color = MaterialTheme.colorScheme.primary)
             }
         }
-        NumberField(
+        CompactNumberField(
             value = slot.durationText,
             onValueChange = onDurationChange,
-            label = "Мин",
+            unit = "мин",
+            contentDescription = "Длительность, мин",
             enabled = enabled,
             maxDigits = 4,
-            modifier = Modifier.width(96.dp)
+            modifier = Modifier
+                .width(64.dp)
+                .height(40.dp)
         )
         IconButton(onClick = onRemove, enabled = enabled) {
             Icon(Icons.Default.Delete, contentDescription = "Удалить слот", tint = MaterialTheme.colorScheme.error)

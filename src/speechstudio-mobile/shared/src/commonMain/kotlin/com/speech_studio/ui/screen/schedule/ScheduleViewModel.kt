@@ -18,6 +18,8 @@ import com.speech_studio.ui.screen.schedule.model.LessonUiModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -31,12 +33,13 @@ class ScheduleViewModel(
     private val shiftRepository: ShiftRepository,
     private val settings: SettingsRepository,
     private val findLessonVideos: FindLessonVideosUseCase,
-    clock: Clock = Clock.System,
-    timeZone: TimeZone = TimeZone.currentSystemDefault()
+    private val clock: Clock = Clock.System,
+    private val timeZone: TimeZone = TimeZone.currentSystemDefault()
 ) : ViewModel() {
     private val today = clock.now().toLocalDateTime(timeZone).date
     private var confirmed: Lesson? = null
     private val mutableState = MutableStateFlow(ScheduleUiState(
+        today = today,
         selectedDate = today, displayedMonth = today.firstOfMonth(), displayedWeekStart = today.startOfWeek(),
         childLoadState = childRepository.state.value, lessonLoadState = lessonRepository.state.value,
         shiftLoadState = shiftRepository.state.value, shifts = shiftRepository.state.value.shifts,
@@ -63,6 +66,14 @@ class ScheduleViewModel(
         }
         viewModelScope.launch {
             settings.visibleTagsLimit.collect { limit -> mutableState.value = mutableState.value.copy(visibleTagsLimit = limit) }
+        }
+        viewModelScope.launch {
+            while (isActive) {
+                delay(TODAY_REFRESH_INTERVAL_MS)
+                val date = clock.now().toLocalDateTime(timeZone).date
+                val state = mutableState.value
+                if (date != state.today) mutableState.value = state.copy(today = date)
+            }
         }
     }
 
@@ -262,3 +273,6 @@ class ScheduleViewModel(
             lesson.videoAttachments.map { it.uri }, participants, lesson.type, lesson.shiftId)
     }
 }
+
+/** Как часто перепроверять дату для выделения текущего дня: раз в минуту. */
+private const val TODAY_REFRESH_INTERVAL_MS = 60_000L

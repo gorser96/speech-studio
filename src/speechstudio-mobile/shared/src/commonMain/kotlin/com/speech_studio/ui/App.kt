@@ -16,12 +16,14 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -139,8 +141,15 @@ fun App(
     ) {
 
         Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                    ),
                     navigationIcon = {
                         when {
                             cardOpen -> IconButton(enabled = !appBusy,
@@ -206,7 +215,10 @@ fun App(
                         }
                     },
                     title = {
-                        Text(screenTitle)
+                        Text(
+                            text = screenTitle,
+                            style = MaterialTheme.typography.titleLarge
+                        )
                     },
                     actions = {
                         if (shiftOpen) {
@@ -269,7 +281,8 @@ fun App(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .consumeWindowInsets(innerPadding)
+                    .consumeWindowInsets(innerPadding),
+                color = MaterialTheme.colorScheme.background
             ) {
                 when (currentScreen) {
                     AppScreen.Schedule -> ScheduleScreen(

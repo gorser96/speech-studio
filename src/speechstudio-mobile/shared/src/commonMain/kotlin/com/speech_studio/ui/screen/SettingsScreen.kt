@@ -18,7 +18,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.speech_studio.ui.components.BentoCard
 import com.speech_studio.ui.components.NumberField
+import com.speech_studio.ui.components.SectionLabel
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
@@ -33,62 +35,69 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Расписание", style = MaterialTheme.typography.titleMedium)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(
-                Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text("Скрывать выходные")
+        SectionLabel("Расписание")
+        BentoCard(Modifier.fillMaxWidth()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(
+                    Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text("Скрывать выходные")
+                    Text(
+                        "Недельная сетка показывает пять дней — с понедельника по пятницу",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = state.hideWeekend, onCheckedChange = viewModel::setHideWeekend)
+            }
+        }
+        SectionLabel("Часы сетки")
+        BentoCard(Modifier.fillMaxWidth()) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Недельная сетка показывает пять дней — с понедельника по пятницу",
+                    "Недельная и дневная сетки показывают часы от начального до конечного, конечный не включается",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                NumberField(
+                    value = state.gridStartHour.toString(),
+                    onValueChange = { viewModel.setGridStartHour(it.toIntOrNull() ?: 0) },
+                    label = "Начальный час",
+                    modifier = Modifier.fillMaxWidth(),
+                    maxDigits = 2,
+                    isError = startInvalid,
+                    supportingText = if (startInvalid) "Начальный час — от 0 до 23" else null
+                )
+                NumberField(
+                    value = state.gridEndHour.toString(),
+                    onValueChange = { viewModel.setGridEndHour(it.toIntOrNull() ?: 0) },
+                    label = "Конечный час",
+                    modifier = Modifier.fillMaxWidth(),
+                    maxDigits = 2,
+                    isError = endInvalid,
+                    supportingText = if (endInvalid) "Конечный час — от 1 до 24 и больше начального" else null
+                )
             }
-            Switch(checked = state.hideWeekend, onCheckedChange = viewModel::setHideWeekend)
         }
-        Text(
-            "Часы сетки",
-            style = MaterialTheme.typography.titleMedium
-        )
-        Text(
-            "Недельная и дневная сетки показывают часы от начального до конечного, конечный не включается",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        NumberField(
-            value = state.gridStartHour.toString(),
-            onValueChange = { viewModel.setGridStartHour(it.toIntOrNull() ?: 0) },
-            label = "Начальный час",
-            modifier = Modifier.fillMaxWidth(),
-            maxDigits = 2,
-            isError = startInvalid,
-            supportingText = if (startInvalid) "Начальный час — от 0 до 23" else null
-        )
-        NumberField(
-            value = state.gridEndHour.toString(),
-            onValueChange = { viewModel.setGridEndHour(it.toIntOrNull() ?: 0) },
-            label = "Конечный час",
-            modifier = Modifier.fillMaxWidth(),
-            maxDigits = 2,
-            isError = endInvalid,
-            supportingText = if (endInvalid) "Конечный час — от 1 до 24 и больше начального" else null
-        )
-        Text("Дети", style = MaterialTheme.typography.titleMedium)
-        Text(
-            "Сколько тэгов показывать в строке ребёнка в списке детей и в карточке занятия; лишние тэги показаны меткой «+N»",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        NumberField(
-            value = state.visibleTagsLimit.toString(),
-            onValueChange = { viewModel.setVisibleTagsLimit(it.toIntOrNull() ?: 0) },
-            label = "Сколько тэгов показывать",
-            modifier = Modifier.fillMaxWidth(),
-            maxDigits = 2,
-            isError = state.visibleTagsLimitInvalid,
-            supportingText = if (state.visibleTagsLimitInvalid) "Количество тэгов — от 0 до 10" else null
-        )
+        SectionLabel("Дети")
+        BentoCard(Modifier.fillMaxWidth()) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "Сколько тэгов показывать в строке ребёнка в списке детей и в карточке занятия; лишние тэги показаны меткой «+N»",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                NumberField(
+                    value = state.visibleTagsLimit.toString(),
+                    onValueChange = { viewModel.setVisibleTagsLimit(it.toIntOrNull() ?: 0) },
+                    label = "Сколько тэгов показывать",
+                    modifier = Modifier.fillMaxWidth(),
+                    maxDigits = 2,
+                    isError = state.visibleTagsLimitInvalid,
+                    supportingText = if (state.visibleTagsLimitInvalid) "Количество тэгов — от 0 до 10" else null
+                )
+            }
+        }
     }
 }

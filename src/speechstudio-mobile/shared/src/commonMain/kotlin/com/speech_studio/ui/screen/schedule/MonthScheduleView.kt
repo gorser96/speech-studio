@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +24,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.speech_studio.domain.text.RussianText
+import com.speech_studio.ui.components.BentoCard
+import com.speech_studio.ui.components.BentoStatTile
+import com.speech_studio.ui.components.SectionLabel
 import com.speech_studio.ui.screen.schedule.model.LessonUiModel
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
@@ -40,32 +44,43 @@ fun MonthScheduleView(
     shifts: List<ShiftContainerUi> = emptyList(),
     onShiftClick: (String) -> Unit = {}
 ) {
-    CalendarView(
-        displayedMonth = displayedMonth,
-        selectedDate = selectedDate,
-        onDateSelected = onDateSelected,
-        onPreviousMonth = onPreviousMonth,
-        onNextMonth = onNextMonth
-    )
-
-    Spacer(modifier = Modifier.height(24.dp))
-
-    Text(
-        text = "Занятия",
-        style = MaterialTheme.typography.titleLarge
-    )
-
-    Spacer(modifier = Modifier.height(12.dp))
-
     val lessonsForSelectedDate = lessons
         .filter { it.scheduledAt.date == selectedDate }
         .sortedBy { it.scheduledAt.time }
     val shiftsForSelectedDate = shifts.onDate(selectedDate)
 
+    DaySummaryTiles(
+        selectedDate = selectedDate,
+        lessonCount = lessonsForSelectedDate.size,
+        shiftCount = shiftsForSelectedDate.size
+    )
+
+    Spacer(modifier = Modifier.height(10.dp))
+
+    BentoCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(12.dp)
+    ) {
+        CalendarView(
+            displayedMonth = displayedMonth,
+            selectedDate = selectedDate,
+            onDateSelected = onDateSelected,
+            onPreviousMonth = onPreviousMonth,
+            onNextMonth = onNextMonth
+        )
+    }
+
+    Spacer(modifier = Modifier.height(20.dp))
+
+    SectionLabel(text = "Занятия")
+
+    Spacer(modifier = Modifier.height(10.dp))
+
     if (lessonsForSelectedDate.isEmpty() && shiftsForSelectedDate.isEmpty()) {
         Text(
             text = "На этот день занятий нет",
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     } else {
         Column(
@@ -86,6 +101,35 @@ fun MonthScheduleView(
                 )
             }
         }
+    }
+}
+
+/** Сводка выбранного дня: дата с днём недели, число занятий и число смен. */
+@Composable
+private fun DaySummaryTiles(
+    selectedDate: LocalDate,
+    lessonCount: Int,
+    shiftCount: Int
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        BentoStatTile(
+            value = RussianText.formatDayMonth(selectedDate),
+            caption = RussianText.weekdayFull(selectedDate.dayOfWeek.isoDayNumber),
+            modifier = Modifier.weight(1.6f)
+        )
+        BentoStatTile(
+            value = lessonCount.toString(),
+            caption = RussianText.nounForm(lessonCount, "занятие", "занятия", "занятий"),
+            modifier = Modifier.weight(1f)
+        )
+        BentoStatTile(
+            value = shiftCount.toString(),
+            caption = RussianText.nounForm(shiftCount, "смена", "смены", "смен"),
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -140,7 +184,8 @@ private fun CalendarView(
                         .replaceFirstChar { it.uppercase() },
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.labelMedium
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -156,7 +201,9 @@ private fun CalendarView(
             items(days) { date ->
                 if (date == null) {
                     Spacer(
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier
+                            .height(44.dp)
+                            .fillMaxWidth()
                     )
                 } else {
                     CalendarDay(
@@ -180,16 +227,16 @@ private fun CalendarDay(
 ) {
     val backgroundModifier = if (isSelected) {
         Modifier
-            .size(40.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.primary)
+            .size(36.dp)
+            .clip(MaterialTheme.shapes.extraSmall)
+            .background(MaterialTheme.colorScheme.onSurface)
     } else {
-        Modifier.size(40.dp)
+        Modifier.size(36.dp)
     }
 
     Box(
         modifier = Modifier
-            .height(48.dp)
+            .height(44.dp)
             .fillMaxWidth()
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -201,7 +248,7 @@ private fun CalendarDay(
             Text(
                 text = date.day.toString(),
                 color = if (isSelected) {
-                    MaterialTheme.colorScheme.onPrimary
+                    MaterialTheme.colorScheme.surface
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 },

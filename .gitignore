@@ -45,3 +45,5 @@ desktop.ini
 *.log
 *.tmp
 *.class
+
+src/speechstudio-mobile/.idea/deviceHardwareInput.xml

@@ -8,6 +8,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class ShiftContainersTest {
 
@@ -41,6 +42,31 @@ class ShiftContainersTest {
         val containers = buildShiftContainers(listOf(late, otherDay, early), emptyList())
 
         assertEquals(listOf("early", "late"), containers.onDate(date).map { it.shiftId })
+    }
+
+    @Test
+    fun verticalFractionMapsToHourFullyInsideWindow() {
+        val window = buildShiftContainers(
+            listOf(WorkShift("s1", date, LocalTime(8, 0), LocalTime(12, 0))),
+            emptyList()
+        ).single()
+
+        assertEquals(10, window.hourAtVerticalFraction(0.5f))
+        assertEquals(8, window.hourAtVerticalFraction(0f))
+        assertEquals(11, window.hourAtVerticalFraction(0.99f))
+        assertNull(window.hourAtVerticalFraction(1f))
+    }
+
+    @Test
+    fun verticalFractionRejectsHourCrossingShiftStart() {
+        val window = buildShiftContainers(
+            listOf(WorkShift("s1", date, LocalTime(8, 30), LocalTime(12, 0))),
+            emptyList()
+        ).single()
+
+        // 08:00–09:00 не целиком внутри окна, начинающегося в 08:30.
+        assertNull(window.hourAtVerticalFraction(0f))
+        assertEquals(9, window.hourAtVerticalFraction(0.2f))
     }
 
     private fun lesson(id: String, shiftId: String?, hour: Int) = LessonUiModel(

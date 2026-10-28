@@ -1,5 +1,6 @@
 package com.speech_studio.ui.screen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -19,7 +20,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -59,6 +59,8 @@ import com.speech_studio.domain.model.Tag
 import com.speech_studio.domain.model.TagColorKey
 import com.speech_studio.domain.repository.TagLoadState
 import com.speech_studio.domain.repository.TagWriteResult
+import com.speech_studio.ui.components.SectionLabel
+import com.speech_studio.ui.components.bentoTextFieldColors
 import com.speech_studio.ui.screen.tags.TagsViewModel
 import com.speech_studio.ui.screen.tags.tagLabelColor
 import com.speech_studio.ui.screen.tags.tagPalette
@@ -80,6 +82,7 @@ fun TagsScreen(viewModel: TagsViewModel) {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
+            SectionLabel("Тэги", Modifier.padding(bottom = 12.dp))
             TagsLoadStatus(state.loadState, viewModel::retryLoading)
             state.reorderError?.let { reason ->
                 Spacer(Modifier.height(8.dp))
@@ -112,6 +115,9 @@ fun TagsScreen(viewModel: TagsViewModel) {
         }
         if (ready) FloatingActionButton(
             onClick = viewModel::openNew,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            shape = MaterialTheme.shapes.large,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
@@ -196,7 +202,10 @@ private fun TagRow(
             .fillMaxWidth()
             .onSizeChanged { onHeightChange(it.height) }
             .clickable(enabled = actionsEnabled) { onEdit() },
-        elevation = CardDefaults.cardElevation(defaultElevation = if (dragging) 8.dp else 0.dp)
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             Modifier
@@ -248,7 +257,7 @@ private fun TagRow(
                 Icon(
                     Icons.Default.DragIndicator,
                     contentDescription = "Переместить тэг",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (dragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Spacer(Modifier.width(8.dp))
@@ -274,7 +283,7 @@ internal fun TagSwatch(color: TagColorKey) {
     Box(
         Modifier
             .size(24.dp)
-            .background(tagPalette[color]!!, RoundedCornerShape(6.dp))
+            .background(tagPalette[color]!!, MaterialTheme.shapes.extraSmall)
     )
 }
 
@@ -282,7 +291,7 @@ internal fun TagSwatch(color: TagColorKey) {
 internal fun TagChip(tag: Tag, modifier: Modifier = Modifier) {
     Box(
         modifier
-            .background(tagPalette[tag.color]!!, RoundedCornerShape(12.dp))
+            .background(tagPalette[tag.color]!!, MaterialTheme.shapes.medium)
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Text(tag.name, color = tagLabelColor(tag.color), fontWeight = FontWeight.Medium)
@@ -294,7 +303,7 @@ internal fun SmallTagChip(tag: Tag) {
     Box(
         Modifier
             .widthIn(max = 48.dp)
-            .background(tagPalette[tag.color]!!, RoundedCornerShape(8.dp))
+            .background(tagPalette[tag.color]!!, MaterialTheme.shapes.small)
             .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
@@ -323,7 +332,7 @@ internal fun LimitedTagChips(tags: List<Tag>, maxTags: Int) {
         if (hidden > 0) {
             Box(
                 Modifier
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             ) {
                 Text(
@@ -365,6 +374,8 @@ private fun TagEditorDialog(
                     onValueChange = onNameChange,
                     label = { Text("Название") },
                     enabled = !saving,
+                    shape = MaterialTheme.shapes.medium,
+                    colors = bentoTextFieldColors(),
                     singleLine = true
                 )
                 OutlinedButton(onClick = { paletteMenuOpen = true }, enabled = !saving) {

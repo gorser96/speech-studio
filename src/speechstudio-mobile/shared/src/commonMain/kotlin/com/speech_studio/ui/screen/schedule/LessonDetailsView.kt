@@ -34,6 +34,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.width
 import com.speech_studio.domain.text.RussianText
+import com.speech_studio.ui.components.BentoCard
+import com.speech_studio.ui.components.SectionLabel
+import com.speech_studio.ui.components.bentoTextFieldColors
 import com.speech_studio.ui.screen.LimitedTagChips
 import com.speech_studio.ui.screen.schedule.model.LessonUiModel
 import com.speech_studio.ui.screen.schedule.component.VideoAttachmentsEditor
@@ -81,65 +84,74 @@ fun LessonDetailsView(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        LessonDetailsRow(
-            title = "Дата",
-            value = RussianText.formatLongDatePadded(uiModel.scheduledAt.date)
-        )
-
-        HorizontalDivider()
-
-        LessonDetailsRow(
-            title = "Время",
-            value = uiModel.scheduledAt.time.toString()
-        )
-
-        HorizontalDivider()
-
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Ребёнок",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        BentoCard(modifier = Modifier.fillMaxWidth()) {
+            LessonDetailsRow(
+                title = "Дата",
+                value = RussianText.formatLongDatePadded(uiModel.scheduledAt.date)
             )
-            uiModel.participants.forEach { participant ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = participant.name,
-                        modifier = Modifier.weight(1f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (participant.tags.isNotEmpty()) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        LimitedTagChips(participant.tags, visibleTagsLimit.takeIf { it in 0..10 } ?: 3)
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            LessonDetailsRow(
+                title = "Время",
+                value = uiModel.scheduledAt.time.toString()
+            )
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                SectionLabel(text = "Ребёнок")
+                uiModel.participants.forEach { participant ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = participant.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (participant.tags.isNotEmpty()) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            LimitedTagChips(participant.tags, visibleTagsLimit.takeIf { it in 0..10 } ?: 3)
+                        }
                     }
                 }
+                if (uiModel.participants.isEmpty()) {
+                    Text(uiModel.childNames, style = MaterialTheme.typography.bodyMedium)
+                }
             }
-            if (uiModel.participants.isEmpty()) Text(uiModel.childNames)
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            LessonDetailsRow(
+                title = "Тип",
+                value = lessonTypeTitle(uiModel.type)
+            )
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            LessonDetailsRow("Длительность", "${uiModel.durationMinutes} мин")
         }
 
-        HorizontalDivider()
+        Spacer(modifier = Modifier.height(16.dp))
 
-        LessonDetailsRow(
-            title = "Тип",
-            value = lessonTypeTitle(uiModel.type)
-        )
-
-        HorizontalDivider()
-        LessonDetailsRow("Длительность", "${uiModel.durationMinutes} мин")
-        HorizontalDivider()
+        SectionLabel(text = "Комментарий специалиста")
+        Spacer(modifier = Modifier.height(6.dp))
         OutlinedTextField(
             enabled = !editor.saving, value = comment,
             onValueChange = onCommentChange,
-            label = { Text("Комментарий специалиста") },
+            placeholder = { Text("Заметка о занятии…") },
             minLines = 3,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+            shape = MaterialTheme.shapes.small,
+            colors = bentoTextFieldColors(),
+            modifier = Modifier.fillMaxWidth()
         )
+        Spacer(modifier = Modifier.height(16.dp))
         VideoAttachmentsEditor(
             videoUris = videoUris,
             onChange = onVideosChange,
@@ -150,12 +162,13 @@ fun LessonDetailsView(
             scanMessage = videoScanMessage
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         if (comment != uiModel.comment || videoUris != uiModel.videoUris) {
             Button(
                 enabled = canSave,
                 onClick = onSave,
+                shape = MaterialTheme.shapes.small,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Сохранить")
@@ -186,18 +199,14 @@ private fun LessonDetailsRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+            .padding(vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        SectionLabel(text = title)
 
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.titleSmall
         )
     }
 }

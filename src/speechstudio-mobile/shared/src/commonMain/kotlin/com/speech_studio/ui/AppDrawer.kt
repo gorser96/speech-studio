@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,9 +26,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
  * The logo is injected by the platform shell so the drawer does not reference
@@ -41,11 +39,14 @@ fun AppDrawer(
     logo: Painter? = null,
     onScreenSelected: (AppScreen) -> Unit
 ) {
-    ModalDrawerSheet {
+    ModalDrawerSheet(
+        drawerContainerColor = MaterialTheme.colorScheme.surface,
+        drawerShape = MaterialTheme.shapes.extraLarge
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
@@ -54,36 +55,32 @@ fun AppDrawer(
                     painter = logo,
                     contentDescription = "Кабинет речи",
                     modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(14.dp)),
+                        .size(52.dp)
+                        .clip(MaterialTheme.shapes.medium),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .size(52.dp)
+                        .clip(MaterialTheme.shapes.medium)
                         .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "SS",
                         color = MaterialTheme.colorScheme.onPrimary,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.headlineSmall
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column {
                 Text(
                     text = "Кабинет речи",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.5).sp
-                    ),
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
 
@@ -95,7 +92,7 @@ fun AppDrawer(
             }
         }
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(8.dp))
 
         DrawerItem("Расписание", AppScreen.Schedule, currentScreen, enabled, onScreenSelected)
         DrawerItem("Дети", AppScreen.Children, currentScreen, enabled, onScreenSelected)
@@ -115,12 +112,22 @@ private fun DrawerItem(
 ) {
     NavigationDrawerItem(
         modifier = Modifier
+            .padding(horizontal = 12.dp, vertical = 2.dp)
             .alpha(if (enabled) 1f else 0.38f)
             .semantics { if (!enabled) disabled() },
         label = {
-            Text(label)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleSmall
+            )
         },
-        shape = RoundedCornerShape(2.dp),
+        shape = MaterialTheme.shapes.small,
+        colors = NavigationDrawerItemDefaults.colors(
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            unselectedContainerColor = MaterialTheme.colorScheme.surface,
+            unselectedTextColor = MaterialTheme.colorScheme.onSurface
+        ),
         selected = currentScreen == screen,
         onClick = {
             if (enabled) onScreenSelected(screen)

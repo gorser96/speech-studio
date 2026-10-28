@@ -1,5 +1,6 @@
 package com.speech_studio.ui.screen.shift.templates
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.speech_studio.domain.model.ShiftTemplate
+import com.speech_studio.ui.components.SectionLabel
 
 /**
  * Раздел «Шаблоны смен»: список шаблонов, создание и изменение в нижней панели,
@@ -44,6 +47,7 @@ fun ShiftTemplatesScreen(viewModel: ShiftTemplatesViewModel) {
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            item { SectionLabel("Шаблоны смен") }
             state.message?.let { message ->
                 item {
                     Text(message, color = MaterialTheme.colorScheme.primary)
@@ -69,6 +73,9 @@ fun ShiftTemplatesScreen(viewModel: ShiftTemplatesViewModel) {
 
         FloatingActionButton(
             onClick = viewModel::newTemplate,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            shape = MaterialTheme.shapes.large,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
@@ -125,7 +132,13 @@ private fun ShiftTemplateCard(
     onOpen: () -> Unit,
     onDelete: () -> Unit
 ) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.outlinedCardElevation(defaultElevation = 0.dp)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

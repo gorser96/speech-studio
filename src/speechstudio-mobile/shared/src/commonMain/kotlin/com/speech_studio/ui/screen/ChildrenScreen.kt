@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +35,8 @@ import com.speech_studio.domain.model.Child
 import com.speech_studio.domain.repository.ChildLoadState
 import com.speech_studio.domain.repository.ChildWriteResult
 import com.speech_studio.domain.repository.TagLoadState
+import com.speech_studio.ui.components.BentoCard
+import com.speech_studio.ui.components.bentoTextFieldColors
 import com.speech_studio.ui.screen.children.ChildCardView
 import com.speech_studio.ui.screen.children.ChildrenUiState
 import com.speech_studio.ui.screen.children.ChildrenViewModel
@@ -68,26 +70,38 @@ private fun ChildrenListView(state: ChildrenUiState, viewModel: ChildrenViewMode
                 label = { Text("Поиск по имени") },
                 singleLine = true,
                 enabled = !state.busy,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.small,
+                colors = bentoTextFieldColors()
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
             ChildrenLoadStatus(state.loadState, viewModel::retryLoading, !state.busy)
-            if (ready && state.children.isEmpty()) Text("Детей пока нет")
+            if (ready && state.children.isEmpty()) Text(
+                "Детей пока нет",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             if (ready && state.children.isNotEmpty() && effectiveQuery.isNotEmpty() && shown.isEmpty())
-                Text("Ничего не найдено")
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Ничего не найдено",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 88.dp)
+            ) {
                 items(shown, key = { it.id }) { child ->
-                    Card(
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable(enabled = ready && !state.busy) { viewModel.openCard(child.id) }) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                    BentoCard(
+                        onClick = { viewModel.openCard(child.id) },
+                        enabled = ready && !state.busy,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                child.name,
+                                text = child.name,
                                 modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.titleSmall,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -107,7 +121,10 @@ private fun ChildrenListView(state: ChildrenUiState, viewModel: ChildrenViewMode
             onClick = viewModel::openNew,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(16.dp),
+            shape = MaterialTheme.shapes.large,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         ) { Icon(Icons.Default.Add, contentDescription = "Добавить ребёнка") }
     }
     state.editor?.let { editor ->

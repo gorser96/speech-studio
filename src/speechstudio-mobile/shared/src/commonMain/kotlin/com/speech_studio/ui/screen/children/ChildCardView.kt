@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -55,8 +54,11 @@ import com.speech_studio.domain.repository.GenerateChildLessonsResult
 import com.speech_studio.domain.repository.TagLoadState
 import com.speech_studio.domain.text.RussianText
 import com.speech_studio.platform.PlatformBackHandler
+import com.speech_studio.ui.components.BentoCard
 import com.speech_studio.ui.components.NumberField
+import com.speech_studio.ui.components.SectionLabel
 import com.speech_studio.ui.components.TimeField
+import com.speech_studio.ui.components.bentoTextFieldColors
 import com.speech_studio.ui.screen.DeleteChildDialog
 import com.speech_studio.ui.screen.TagChip
 import com.speech_studio.ui.screen.TagSwatch
@@ -157,29 +159,49 @@ fun ChildCardView(state: ChildrenUiState, viewModel: ChildrenViewModel) {
 private fun ChildCardDetails(state: ChildrenUiState, card: Child, viewModel: ChildrenViewModel) {
     ChildCardTags(state, viewModel::retryTags)
     Spacer(Modifier.height(16.dp))
-    Text("Периодическое расписание", style = MaterialTheme.typography.titleMedium)
+    SectionLabel("Периодическое расписание")
     Spacer(Modifier.height(8.dp))
-    if (card.schedule.slots.isEmpty()) {
-        Text("Периодического расписания нет")
-    } else {
-        card.schedule.slots.forEach { slot -> Text(formatSlot(slot)) }
-        card.schedule.endDate?.let { Text("Дата окончания: ${formatEndDate(it)}") }
+    BentoCard(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (card.schedule.slots.isEmpty()) {
+                Text("Периодического расписания нет", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                card.schedule.slots.forEach { slot ->
+                    Text(formatSlot(slot), style = MaterialTheme.typography.titleSmall)
+                }
+                card.schedule.endDate?.let {
+                    Text(
+                        text = "Дата окончания: ${formatEndDate(it)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
     Spacer(Modifier.height(16.dp))
     if (state.generating) {
-        Text("Создание занятий…")
+        Text("Создание занятий…", color = MaterialTheme.colorScheme.onSurfaceVariant)
     } else {
-        Button(onClick = viewModel::generateLessons, enabled = viewModel.canGenerate(card)) {
+        Button(
+            onClick = viewModel::generateLessons,
+            enabled = viewModel.canGenerate(card),
+            shape = MaterialTheme.shapes.small
+        ) {
             Text("Создать занятия")
         }
     }
     state.generationCounts?.let { counts ->
         Spacer(Modifier.height(8.dp))
-        Text(generationResultText(counts))
+        Text(generationResultText(counts), style = MaterialTheme.typography.bodySmall)
     }
     state.generationError?.let { reason ->
         Spacer(Modifier.height(8.dp))
-        Text(generationErrorText(reason), color = MaterialTheme.colorScheme.error)
+        Text(
+            generationErrorText(reason),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error
+        )
         TextButton(
             onClick = viewModel::generateLessons,
             enabled = !state.busy
@@ -189,7 +211,8 @@ private fun ChildCardDetails(state: ChildrenUiState, card: Child, viewModel: Chi
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(
             onClick = viewModel::startEditing,
-            enabled = !state.busy
+            enabled = !state.busy,
+            shape = MaterialTheme.shapes.small
         ) { Text("Редактировать") }
         TextButton(
             onClick = { viewModel.openDeleteConfirm(card) },
@@ -201,11 +224,16 @@ private fun ChildCardDetails(state: ChildrenUiState, card: Child, viewModel: Chi
 
 @Composable
 private fun ChildCardTags(state: ChildrenUiState, onRetryTags: () -> Unit) {
-    Text("Тэги", style = MaterialTheme.typography.titleMedium)
+    SectionLabel("Тэги")
     Spacer(Modifier.height(8.dp))
     val tagsState = state.tagsLoadState
     when (tagsState) {
-        is TagLoadState.Loading -> Text("Загрузка тэгов…")
+        is TagLoadState.Loading -> Text(
+            "Загрузка тэгов…",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
         is TagLoadState.Error -> Column {
             Text("Не удалось загрузить тэги", color = MaterialTheme.colorScheme.error)
             TextButton(onClick = onRetryTags) { Text("Повторить загрузку") }
@@ -214,7 +242,11 @@ private fun ChildCardTags(state: ChildrenUiState, onRetryTags: () -> Unit) {
         is TagLoadState.Ready -> {
             val assigned = state.card?.tagIds.orEmpty().toSet()
             val tags = tagsState.tags.filter { it.id in assigned }
-            if (tags.isEmpty()) Text("Тэги не назначены")
+            if (tags.isEmpty()) Text(
+                "Тэги не назначены",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             else FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -237,10 +269,12 @@ private fun ChildCardEditor(state: ChildrenUiState, viewModel: ChildrenViewModel
         label = { Text("Имя") },
         enabled = !saving,
         singleLine = true,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.small,
+        colors = bentoTextFieldColors()
     )
     Spacer(Modifier.height(16.dp))
-    Text("Тэги", style = MaterialTheme.typography.titleMedium)
+    SectionLabel("Тэги")
     Spacer(Modifier.height(8.dp))
     when (val tagsState = state.tagsLoadState) {
         is TagLoadState.Loading -> Text("Загрузка тэгов…")
@@ -284,7 +318,7 @@ private fun ChildCardEditor(state: ChildrenUiState, viewModel: ChildrenViewModel
         )
     }
     Spacer(Modifier.height(16.dp))
-    Text("Периодическое расписание", style = MaterialTheme.typography.titleMedium)
+    SectionLabel("Периодическое расписание")
     Spacer(Modifier.height(8.dp))
     draft.slots.forEach { slot ->
         SlotEditorRow(
@@ -410,7 +444,7 @@ private fun SlotEditorRow(
     Row(verticalAlignment = Alignment.CenterVertically) {
         OutlinedButton(
             onClick = { menuOpen = true }, enabled = !saving,
-            shape = RoundedCornerShape(size = 5.dp),
+            shape = MaterialTheme.shapes.extraSmall,
             modifier = Modifier
                 .height(60.dp)
                 .padding(top = 6.dp)

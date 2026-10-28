@@ -21,6 +21,7 @@ data class ScheduleUiState(
     val creationDateTime: LocalDateTime? = null,
     val isEditingLesson: Boolean = false,
     val viewMode: ScheduleViewMode = ScheduleViewMode.WEEK,
+    val today: LocalDate,
     val selectedDate: LocalDate,
     val displayedMonth: LocalDate,
     val displayedWeekStart: LocalDate,
