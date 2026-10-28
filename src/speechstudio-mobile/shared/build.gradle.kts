@@ -10,7 +10,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.logoped_plus.shared"
+        namespace = "com.speech_studio.shared"
         compileSdk = 37
         minSdk = 34
 

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.logoped_plus"
+    namespace = "com.speech_studio"
     compileSdk {
         version = release(37)
     }
