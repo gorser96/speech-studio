@@ -85,7 +85,7 @@ fun AppDrawer(
                 )
 
                 Text(
-                    text = "Помогаем говорить увереннее",
+                    text = "Помогаем говорить красиво",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
